@@ -25,7 +25,6 @@ def convert_cmd(str_cmd):
 
     args = old_cmd.get("arguments")
     command = old_cmd["command"]
-    print("COMMAND IS %s" % command)
     new_cmd = {
         "id": old_cmd["seq"],
         "jsonrpc": "2.0"
@@ -34,7 +33,40 @@ def convert_cmd(str_cmd):
         new_cmd["method"] = "textDocument/hover" if command == "quickinfo" else "textDocument/definition"
         new_cmd["params"] = {
             "position": convert_position_to_lsp(args),
-            "textDocument": convert_filename_to_lsp(args)
+            "textDocument": {
+                "uri": filename_to_uri(args["file"])
+            }
+        }
+        return new_cmd
+    elif command == "change":
+        new_cmd["method"] = "textDocument/didChange"
+        new_cmd["params"] = {
+            "textDocument": {
+                "uri": filename_to_uri(args["file"]),
+                "version": 1
+            },
+            "contentChanges": convert_change_to_lsp(args)
+        }
+        return new_cmd
+    elif command == "open":
+        new_cmd["method"] = "textDocument/didOpen"
+        new_cmd["params"] = {
+            "textDocument": {
+                "uri": filename_to_uri(args["file"]),
+                "languageId": "go",
+                "version": 0,
+                "text": args["text"]
+            },
+        }
+        return new_cmd
+    elif command == "references":
+        new_cmd["method"] = "textDocument/references"
+        new_cmd["params"] = {
+            "position": convert_position_to_lsp(args),
+            "textDocument": {
+                "uri": filename_to_uri(args["file"])
+            },
+            "includeDeclaration": False,
         }
         return new_cmd
     return None
@@ -54,17 +86,47 @@ def convert_position_to_lsp(args):
         }
 
 
+def convert_range_to_lsp(args):
+        return {
+            "start": {
+                "line": args["line"] - 1,
+                "character": args["offset"] - 1
+            },
+            "end": {
+                "line": args["endLine"] - 1,
+                "character": args["endOffset"] - 1
+            }
+        }
+
+
 def convert_position_from_lsp(args):
     return {
-        "line": args["line"],
-        "offset": args["character"]
+        "line": args["line"] + 1,
+        "offset": args["character"] + 1
     }
 
 
-def convert_filename_to_lsp(args):
-    return {
-        "uri": "file://"+args["file"]
+def convert_change_to_lsp(args):
+    return [
+        {
+            # "range": convert_range_to_lsp(args),
+            # "rangeLength": 5,
+            "text": args["insertString"]
+        }
+    ]
+
+
+def convert_filename_to_lsp(args, version=None):
+    return_val = {
+        "uri": filename_to_uri(args["file"])
     }
+    if version:
+        return_val["version"] = version
+    return return_val
+
+
+def filename_to_uri(filename):
+    return "file://"+filename
 
 
 def convert_lsp_to_filename(uri):
@@ -80,12 +142,43 @@ def format_request(request):
     return result
 
 
+def convert_other(msg):
+    if not msg.get("params"):
+        return None
+    params = msg["params"]
+    if params.get("diagnostics"):
+        diag = params.get("diagnostics")[0]
+        return {
+            "event": "syntaxDiag",
+            "type": "event",
+            "seq": 0,
+            "body": {
+                "file": convert_lsp_to_filename(params["uri"]),
+                "diagnostics": [{
+                    "text": diag["message"],
+                    "start": {
+                        "line": diag["range"]["start"]["line"]+1,
+                        "offset": diag["range"]["start"]["character"]+1,
+                    },
+                    "end": {
+                        "line": diag["range"]["end"]["line"]+1,
+                        "offset": diag["range"]["end"]["character"]+2,
+                    },
+                }]
+            }
+        }
+    return None
+
+
 def convert_response(request_type, response):
-    if response["id"] == 0:
+    if response.get("id") == 0:
         return None
     success = response.get("result") is not None
     if not success:
         return None
+    if not response.get("result"):
+        return None
+
     if request_type == "textDocument/hover":
         first_result = response["result"]
         return {
@@ -119,4 +212,36 @@ def convert_response(request_type, response):
             }],
             "type": "response"
         }
+    elif request_type == "textDocument/references":
+        referencesRespBody = {
+                "refs": [],
+                "symbolName": "SymbolName",
+                "symbolDisplayString": "SymbolText",
+                "symbolStartOffset": 17
+            }
+        for entry in response["result"]:
+            referencesRespBody["refs"].append({
+                "end": convert_position_from_lsp(entry["range"]["end"]),
+                "start": convert_position_from_lsp(entry["range"]["start"]),
+                "isDefinition": False,
+                "isWriteAccess": True,
+                "file": convert_lsp_to_filename(entry["uri"]),
+                "lineText": "RandomText",
+            })
+        return {
+            "seq": 0,
+            "request_seq": response["id"],
+            "success": success,
+            "command": "references",
+            "body": referencesRespBody,
+            "type": "response"
+        }
+
     return None
+
+
+# file_name = args["filename"]
+#         line = args["line"]
+#         ref_display_string = args["referencesRespBody"]["symbolDisplayString"]
+#         ref_id = args["referencesRespBody"]["symbolName"]
+#         refs = args["referencesRespBody"]["refs"]

@@ -20,6 +20,7 @@ from .references import (
     TypescriptFindReferencesCommand,
     TypescriptGoToRefCommand,
     TypescriptNextRefCommand,
+    TypescriptEmptyRefs,
     TypescriptPopulateRefs,
     TypescriptPrevRefCommand
 )
@@ -31,8 +32,8 @@ from .rename import (
 from .build import TypescriptBuildCommand
 from .settings import (
     TypescriptOpenPluginDefaultSettingFile,
-    TypescriptOpenTsDefaultSettingFile,
-    TypescriptOpenTsreactDefaultSettingFile
+    TypescriptOpenTsDefaultSettingFile
+    # TypescriptOpenTsreactDefaultSettingFile
 )
 
 __all__ = [
@@ -55,6 +56,7 @@ __all__ = [
     "TypescriptFindReferencesCommand",
     "TypescriptGoToDefinitionCommand",
     "TypescriptNextRefCommand",
+    "TypescriptEmptyRefs",
     "TypescriptPopulateRefs",
     "TypescriptPrevRefCommand",
     "TypescriptDelayedRenameFile",
@@ -67,5 +69,5 @@ __all__ = [
     "TypescriptBuildCommand",
     "TypescriptOpenPluginDefaultSettingFile",
     "TypescriptOpenTsDefaultSettingFile",
-    "TypescriptOpenTsreactDefaultSettingFile"
+    # "TypescriptOpenTsreactDefaultSettingFile"
 ]

@@ -1,0 +1,3 @@
+[
+  { "command": "typescript_find_references", "caption": "Find local references" }
+]

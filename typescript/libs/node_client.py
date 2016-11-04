@@ -192,6 +192,7 @@ class NodeCommClient(CommClient):
                     # Only put in the queue if wasn't an async request
                     msgq.put(data_json)
             elif data_dict["type"] == "event":
+                print(data_dict)
                 event_name = data_dict["event"]
                 if event_name in asyncEventHandlers:
                     for cb in asyncEventHandlers[event_name]:
@@ -236,7 +237,7 @@ class ServerClient(NodeCommClient):
         super(ServerClient, self).__init__(script_path)
 
         # start node process
-        pref_settings = sublime.load_settings('Preferences.sublime-settings')
+        pref_settings = sublime.load_settings('SublimeLsp.sublime-settings')
         node_path = pref_settings.get('node_path')
         if node_path:
             print("Path of node executable is configured as: " + node_path)

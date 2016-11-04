@@ -60,7 +60,7 @@ def plugin_loaded():
     from on_activated or on_close if necessary.
     """
     log.debug("plugin_loaded started")
-    settings = sublime.load_settings('Preferences.sublime-settings')
+    settings = sublime.load_settings('SublimeLsp.sublime-settings')
     global_vars._language_service_enabled = settings.get('enable_typescript_language_service', True)
     print ("lang_service_enabled: " + str(global_vars.get_language_service_enabled()))
     if not global_vars.get_language_service_enabled():
@@ -102,4 +102,5 @@ def plugin_unloaded():
         ref_info = cli.get_ref_info()
         if ref_info:
             ref_view.settings().set('refinfo', ref_info.as_value())
-    cli.service.exit()
+    for client in cli.client_manager.get_clients():
+        client.exit()

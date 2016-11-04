@@ -1,153 +1,156 @@
-TypeScript Plugin for Sublime Text
-==================================
+# LSP Connector for Sublime Text
 
-[![Join the chat at https://gitter.im/Microsoft/TypeScript-Sublime-Plugin](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Microsoft/TypeScript-Sublime-Plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+A [Language Server Protocol](https://github.com/Microsoft/language-server-protocol) connector for Sublime Text 3.
 
-The plugin uses an IO wrapper around the TypeScript language services to provide an enhanced Sublime Text experience when working with TypeScript code.
+*The project is in beta mode. Feedback or issue? Please email us at support@sourcegraph.com or [file an issue.](https://github.com/sourcegraph/lsp-sublime/issues)*
 
-Requirements
---------------
+## Overview
 
-The plug-in uses **Node.js** to run the TypeScript server.  The plug-in looks for node in the PATH environment variable (which is inherited from Sublime).  If the 'node\_path' setting is present, this will override the PATH environment variable and the plug-in will use the value of the 'node\_path' setting as the node executable to run.  See more information in the tips.
+The [Language Server Protocol](https://github.com/Microsoft/language-server-protocol) is a specification that enables advanced language capabilities in an editor independent-way. Previously, to support a given language in a given editor, an editor extension writer would have to _both_ write the editor specific functionality _as well as_ language analysis capabilities for each language. This means that every editor and language had different levels of capability and reliability.
 
-Note: Using different versions of TypeScript
---------------
-This plugin can be configured to load an alternate version of TypeScript.
-This is typically useful for trying out nightly builds, or prototyping with custom builds.
-To do that, update the `Settings - User` file with the following:
+With LSP, one editor extension can be written per editor, and one language server per language. [Sourcegraph's master plan](https://sourcegraph.com/plan) is to support editor and language server open source authors, [let us know](mailto:hi@sourcegraph.com) if you'd like to work on one!
 
-```json
-"typescript_tsdk": "<path to your folder>/node_modules/typescript/lib"
+This plugin borrows heavily from the popular [Microsoft TypeScript Sublime Plugin](https://github.com/Microsoft/TypeScript-Sublime-Plugin).
+
+## Operations supported
+
+This connector currently supports:
+* [hover](https://github.com/sourcegraph/lsp-sublime#hover) operations (Sublime build >=3124)
+* [goto definition](https://github.com/sourcegraph/lsp-sublime#go-to-definition)
+* [find all references](https://github.com/sourcegraph/lsp-sublime#find-all-references)
+* [error highlighting](https://github.com/sourcegraph/lsp-sublime#diagnostics)
+
+Autocomplete, semantic symbol-based search, formatting utilities will soon be supported.
+
+## Languages supported
+
+This plugin has been developed for use with the [go-langserver](https://github.com/sourcegraph/go-langserver) language server. [Sourcegraph](https://sourcegraph.com) is currently developing JavaScript/TypeScript, Python, and PHP language servers, which will also work with this adapter. Finally, any language server implementing the [Language Server Protocol](https://langserver.org) can be connected to this plugin.
+
+## Installation
+
+### Go installation
+
+First, install the `langserver-go` binary by running `go get -u github.com/sourcegraph/go-langserver/langserver/cmd/langserver-go`. The `langserver-go` binary should now be available via your command line.
+
+Next, install the `lsp-sublime` connector for Sublime Text by cloning `lsp-sublime` repository into your Sublime Text 3 Packages folder:
+
+macOS:
+
+```shell
+git clone git@github.com:sourcegraph/lsp-sublime.git ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/lsp-sublime
 ```
 
-Installation
-------------
-If using [Package Control](https://packagecontrol.io/) for Sublime Text, simply install the `TypeScript` package.
+Linux:
 
-Alternatively, you can clone the repo directly into your Sublime plugin folder.  For example, for Sublime Text 3 on a Mac this would look something like:
+```shell
+git clone git@github.com:sourcegraph/lsp-sublime.git ~/.config/sublime-text-3/Packages/lsp-sublime
 ```
-cd ~/"Library/Application Support/Sublime Text 3/Packages"
-git clone --depth 1 https://github.com/Microsoft/TypeScript-Sublime-Plugin.git TypeScript
+
+Next, configure the LSP connector for the `langserver-go` binary. To change your Sourcegraph settings, open `SublimeLsp.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Sublime Lsp Connector > Settings - User`.
+
 ```
-And on Windows:
+{
+    ...
+    "clients": [
+        {
+            "binary": "langserver-go",
+            "file_exts": ["go"],
+            // the go binary must be in the path
+            "path_additions": ["/usr/local/go/bin"],
+            "env": {
+                // GOPATH is a required argument, ~'s don't work
+                "GOPATH": "",
+            }
+        }
+    ]
+    ...
+}
 ```
-cd "%APPDATA%\Sublime Text 3\Packages"
-git clone --depth 1 https://github.com/Microsoft/TypeScript-Sublime-Plugin.git TypeScript
+
+Finally, restart Sublime Text to start using the plugin. You may want to [disable Sublime's native tooltips](https://github.com/sourcegraph/lsp-sublime#remove-sublime-text-3-tooltips-and-goto-menu-items), as they are duplicative and interfere with this connector's tooltips.  
+
+## Usage
+
+### Hover
+
+As you navigate through Go files, when your cursor is on a symbol, you should see hover tooltips. You may have to [disable Sublime's native tooltips](https://github.com/sourcegraph/lsp-sublime#remove-sublime-text-3-tooltips-and-goto-menu-items).
+
+![hover tooltips](screenshots/hover.gif)
+
+### Goto definition
+
+[Execute](https://github.com/sourcegraph/lsp-sublime#open-the-command-window) the `Lsp: Goto definition` command, and Sublime will jump to the definition of a symbol in your workspace.
+
+![goto def](screenshots/def.gif)
+
+### Find all references
+
+[Execute](https://github.com/sourcegraph/lsp-sublime#open-the-command-window) the `Lsp: Find all references` command, and Sublime will open up a results pane with semantic references to the symbols within your project.
+
+![find all references](screenshots/refs.png)
+
+### Diagnostics
+
+As you type, the language server connector will receive diagnostics from the language server. If any errors are detected, the editor will display a tooltip when the offending text is clicked.
+
+![find all references](screenshots/diagnostic.gif)
+
+## Troubleshooting
+
+### Make sure the langserver-go is installed
+Run `langserver-go -h` in your command line. You should see a help menu.
+
+### Sublime Text 3 version check
+For hover tooltips to work, you'll need Sublime Text 3, Build 3124 (released in 9/2016). Navigate to `Sublime Text > About Sublime Text` to check the version.
+
+### Remove Sublime Text 3 tooltips and Goto menu items
+If you are seeing two tooltips that flicker when you hover over symbols, you may have to disable Sublime Text 3 tooltips. Navigate to `Sublime Text > Preferences > Settings`, and add the following lines:
+
 ```
-(`--depth 1` downloads only the current version to reduce the clone size.)
-Note if you are using the portable version of Sublime Text, the location will be different.  (See http://docs.sublimetext.info/en/latest/basic_concepts.html#the-data-directory for more info).
+{
+    ...
+    "show_definitions": false, // recommended: removes default Sublime tooltips
+    "index_files": false, // optional: removes default Sublime "Goto Definition" from right click
+    ...
+} 
+```
 
-**IMPORTANT** If you already have a package called `TypeScript` installed, either remove this first, or clone this repo to a different folder, else module name resolution can break the plugin.
+## Using Sublime with LSP Connector
 
-Platform support
-----------------
-#### OS:
-The plugin has identical behavior across Windows, Mac, and Linux;
+### Open the command window
 
-#### Sublime Text version:
-The plugin supports both ST2 and ST3. However, some features are only available in ST3:
-+ Tool tips
-+ Error list
+To open Sublime's command window and access LSP connector operations, just execute the following key combination:
+* Linux/Windows <kbd>ctrl</kbd>+<kbd>shift</kbd>+<kbd>p</kbd>
+* Mac <kbd>command</kbd>+<kbd>shift</kbd>+<kbd>p</kbd>
 
-On Windows with ST2, you may see a "plugin delay" message upon startup.  This happens because ST2 does not call "plugin_loaded()", so the TypeScript server process is started from within an event handler.
+Any search items starting with `Language Server` is provided by the LSP connector.
 
-Where possible, the use of a [Sublime Text 3](http://www.sublimetext.com/3) build >= 3070 is recommended, as this provides a popup API used for tool tips.
+![command bar access](screenshots/toolbar.png)
 
-Features
---------
-The below features are available via the keyboard shortcuts shown, or via the Command Palette (^ means the `ctrl` key):
+### Add right click menu options
 
-|Feature                | Shortcut        |
-|-----------------------|-----------------|
-|Rename                 | `^T` `^M`       |
-|Find references        | `^T` `^R`       |
-|Next reference         | `^T` `^N`       |
-|Prev reference         | `^T` `^P`       |
-|Format document        | `^T` `^F`       |
-|Format selection       | `^T` `^F`       |
-|Format line            | `^;`            |
-|Format braces          | `^ Shift ]`     |
-|Navigate to symbol     | `^ Alt R`       |
-|Go to definition       | `^T^D` or `F12` |
-|Trigger completion     | `^Space`        |
-|Trigger signature help | `Alt+,`         |
-|See previous signature in the tooltip | `Alt + up`   |
-|See next signature in the tooltip | `Alt + down` |
-|Paste and format       | `^V` or <code>&#8984;V</code> |
-|Quick info             | `^T` `^Q`       |
-|Build		        | (Win)`^B` or `F7`, (OSX) `⌘B` or `F7`   |
-|Error list             | (via Command Palette) |
+TBD
 
-The "format on key" feature is on by default, which formats the current line after typing `;`, `}` or `enter`.
-To disable it, go to `Preferences` -> `Package Settings` -> `TypeScript` -> `Plugin Settings - User`, and add
-`"typescript_auto_format": false` to the json file.
+### Change default keybindings
 
-For further information about the keyboard shortcuts, please refer to the [`Default.sublime-keymap`](https://github.com/Microsoft/TypeScript-Sublime-Plugin/blob/master/Default.sublime-keymap) file for common shortcuts and
-[`Default (OSX).sublime-keymap`](https://github.com/Microsoft/TypeScript-Sublime-Plugin/blob/master/Default%20(OSX).sublime-keymap),
-[`Default (Windows).sublime-keymap`](https://github.com/Microsoft/TypeScript-Sublime-Plugin/blob/master/Default%20(Windows).sublime-keymap),
-[`Default (Linux).sublime-keymap`](https://github.com/Microsoft/TypeScript-Sublime-Plugin/blob/master/Default%20(Linux).sublime-keymap)
-for OS-specific shortcuts.
+To change the default keybindings, navigate to `Sublime Text > Preferences > Keybindings`, and add the following:
 
-Project System
-------
-The plugin supports two kinds of projects:
+```
+[
+    // Defaults listed below. For macOS users, use command key instead of ctrl.
+    ...
+    {
+		"keys": ["ctrl+.","ctrl+h"],
+		"command": "goto_provider"
+	},
+	{
+		"keys": ["ctrl+.","ctrl+j"],
+		"command": "refs_provider"
+	}
+    ...
+]
+``` 
 
-#### Inferred project
+## Support
 
-For loose TS files opened in Sublime, the plugin will create an inferred project and include every files that the current file refers to.
-
-#### Configured project
-
-The plugin also supports representing a TypeScript project via a [tsconfig.json](http://www.typescriptlang.org/docs/handbook/tsconfig-json.html) file. If a file of this name is detected in a parent directory, then its settings will be used by the plugin.
-
-Screenshots
-------
-- Project error list
-
-![](https://raw.githubusercontent.com/Microsoft/TypeScript-Sublime-Plugin/master/screenshots/errorlist.gif)
-
-- Signature popup (Requires [Sublime Text 3](http://www.sublimetext.com/3) build >= 3070)
-
-![](https://raw.githubusercontent.com/Microsoft/TypeScript-Sublime-Plugin/master/screenshots/signature.gif)
-
-- Navigate to symbol
-
-![](https://raw.githubusercontent.com/Microsoft/TypeScript-Sublime-Plugin/master/screenshots/navigateToSymbol.gif)
-
-- Format
-
-![](https://raw.githubusercontent.com/Microsoft/TypeScript-Sublime-Plugin/master/screenshots/format.gif)
-
-- Rename
-
-![](https://raw.githubusercontent.com/Microsoft/TypeScript-Sublime-Plugin/master/screenshots/build_tsconfig.gif)
-
-- Find all references
-
-![](https://raw.githubusercontent.com/Microsoft/TypeScript-Sublime-Plugin/master/screenshots/find_ref.gif)
-
-- Quick info
-
-![](https://raw.githubusercontent.com/Microsoft/TypeScript-Sublime-Plugin/master/screenshots/quickinfo.gif)
-
-- Build configured project
-
-![](https://raw.githubusercontent.com/Microsoft/TypeScript-Sublime-Plugin/master/screenshots/build_tsconfig.gif)
-
-- Build loose file
-
-![](https://raw.githubusercontent.com/Microsoft/TypeScript-Sublime-Plugin/master/screenshots/build_loose_file.gif)
-
-Reporting Issues
--------
-Issues are being tracked via the [GitHub Issues](https://github.com/Microsoft/TypeScript-Sublime-Plugin/issues) page for the project, and tagged with the appropriate issue type. Please do log issues for any bugs you find or enhancements you would like to see (after searching to see if such as issue already exists).  We are excited to get your feedback and work with the community to make this plugin as awesome as possible.
-
-Note about `.tmLanguage` related issues
---------------
-As the TypeScript and TypeScriptReact `.tmLanguage` definition files are shared across multiple editors including Sublime Text, Atom-TypeScript, and Visual Studio Code, we decided to create a dedicated repo for these files to combine the efforts for improvement.
-The new repo is at https://github.com/Microsoft/TypeScript-TmLanguage, and all future tmLanguage-related issues will be tracked there and ported back to this repo.
-
-Tips and Known Issues
-----
-See tips and known issues in the [wiki page](https://github.com/Microsoft/TypeScript-Sublime-Plugin/wiki/Tips-and-Known-Issues).
-
+Found a bug, want to request a feature, or want to help Sourcegraph build the global graph of code? Send us an email at hi@sourcegraph.com.

@@ -7,7 +7,10 @@ class TypescriptGoToDefinitionCommand(TypeScriptBaseTextCommand):
     """Go to definition command"""
     def run(self, text):
         check_update_view(self.view)
-        definition_resp = cli.service.definition(self.view.file_name(), get_location_from_view(self.view))
+        service = cli.get_service()
+        if not service:
+            return None
+        definition_resp = service.definition(self.view.file_name(), get_location_from_view(self.view))
         if definition_resp["success"]:
             code_span = definition_resp["body"][0] if len(definition_resp["body"]) > 0 else None
             if code_span:

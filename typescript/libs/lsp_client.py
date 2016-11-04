@@ -1,3 +1,5 @@
+import logging
+import copy
 import os
 import subprocess
 import threading
@@ -21,9 +23,12 @@ else:
 class LspCommClient(node_client.CommClient):
     __CONTENT_LENGTH_HEADER = b"Content-Length: "
 
-    def __init__(self, script_path):
+    def __init__(self, binary_path, args, env, root_path):
         self.server_proc = None
-        self.script_path = script_path
+        self.args = copy.deepcopy(args)
+        self.args.insert(0, binary_path)
+        self.root_path = root_path
+        self.env = copy.deepcopy(env)
 
         # create event handler maps
         self.event_handlers = dict()
@@ -109,7 +114,6 @@ class LspCommClient(node_client.CommClient):
                 while reqSeq < seq:
                     data = self.msgq.get(True, 2)
                     dict = json_helpers.decode(data)
-                    print("HERE %s" % dict)
                     reqSeq = dict['request_seq']
                 return dict
             except queue.Empty:
@@ -122,18 +126,17 @@ class LspCommClient(node_client.CommClient):
         """
         Post command to server; no response needed
         """
-        log.debug('Posting command: {0}'.format(cmd))
+        log.debug('Received order to post command: {0}'.format(cmd))
         cmd = lsp_helpers.convert_cmd(cmd)
         if not cmd:
             return False
         self.reqType[cmd["id"]] = cmd["method"]
         cmd = lsp_helpers.format_request(cmd)
-        print("Sending command %s" % cmd)
+        log.debug('Sending command: {0}'.format(cmd.splitlines()))
         if not self.server_proc:
             log.error("can not send request; node process not running")
             return False
         else:
-            cmd = cmd
             self.server_proc.stdin.write(cmd.encode())
             self.server_proc.stdin.flush()
             return True
@@ -175,34 +178,36 @@ class LspCommClient(node_client.CommClient):
             log.debug('Read body of length: {0}'.format(body_length))
             data_json = data.decode("utf-8")
             data_dict = json_helpers.decode(data_json)
-            if data_dict['result']:
+            
+            log.debug('Received raw data: {0}'.format(data_dict))
+            if data_dict.get('result') is not None and data_dict.get("id") is not None:
                 msg_id = data_dict['id']
-                print("DATA RECEIVED %s" % data_dict)
                 req_type = reqType.pop(msg_id)
-                print("REQ TYPE %s" % req_type)
                 data_dict = lsp_helpers.convert_response(req_type, data_dict)
-                print("CONVERTED TYPE %s" % data_dict)
+                log.debug('Converted raw data: {0}'.format(data_dict))
                 if data_dict is None or data_dict["type"] != "response":
                     return False
                 log.debug('Body sequence#: {0}'.format(msg_id))
                 if msg_id in asyncReq:
                     callback = asyncReq.pop(msg_id, None)
-                    print("Async request callback is %s" % callback)
                     if callback:
                         callback(data_dict)
                 else:
                     # Only put in the queue if wasn't an async request
                     msgq.put(json_helpers.encode(data_dict))
-
-            # TODO(uforic): Deal with this later
-            # elif data_dict["type"] == "event":
-            #     event_name = data_dict["event"]
-            #     if event_name in asyncEventHandlers:
-            #         for cb in asyncEventHandlers[event_name]:
-            #             # Run <cb> asynchronously to keep read_msg as small as possible
-            #             sublime.set_timeout(lambda: cb(data_dict), 0)
-            #     else:
-            #         eventq.put(data_json)
+            else:
+                other = lsp_helpers.convert_other(data_dict)
+                if not other:
+                    log.debug('Could not convert raw data.')
+                    return False
+                log.debug('Converted server generated data:{0}'.format(other))
+                event_name = other["event"]
+                if event_name in asyncEventHandlers:
+                    for cb in asyncEventHandlers[event_name]:
+                        # Run <cb> asynchronously to keep read_msg as small as possible
+                        sublime.set_timeout(lambda: cb(other), 0)
+                else:
+                    eventq.put(data_json)
         else:
             log.info('Body length of 0 in server stream')
 
@@ -232,54 +237,28 @@ class LspCommClient(node_client.CommClient):
 
 class ServerClient(LspCommClient):
 
-    def __init__(self, script_path):
+    def __init__(self, binary_path, args, env, root_path):
         """
         Starts a node client (if not already started) and communicate with it.
         The script file to run is passed to the constructor.
         """
-        super(ServerClient, self).__init__(script_path)
-
-        # start node process
-        pref_settings = sublime.load_settings('Preferences.sublime-settings')
-        node_path = pref_settings.get('node_path')
-        if node_path:
-            print("Path of node executable is configured as: " + node_path)
-            configured_node_path = os.path.expandvars(node_path)
-            if LspCommClient.is_executable(configured_node_path):
-                node_path = configured_node_path
-            else:
-                node_path = None
-                print("Configured node path is not a valid executable.")
-        if not node_path:
+        super(ServerClient, self).__init__(binary_path, args, env, root_path)
+        print("Trying to spawn executable from: " + binary_path)
+        try:
             if os.name == "nt":
-                node_path = "node"
+                # linux subprocess module does not have STARTUPINFO
+                # so only use it if on Windows
+                si = subprocess.STARTUPINFO()
+                si.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
+                self.server_proc = subprocess.Popen(self.args,
+                                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=si, cwd=self.root_path, env=self.env)
             else:
-                node_path = LspCommClient.which("node")
-        if not node_path:
-            path_list = os.environ["PATH"] + os.pathsep + "/usr/local/bin" + os.pathsep + "$NVM_BIN"
-            print("Unable to find executable file for node on path list: " + path_list)
-            print("To specify the node executable file name, use the 'node_path' setting")
+                log.debug("opening " + binary_path)
+                self.server_proc = subprocess.Popen(self.args,
+                                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=self.root_path, env=self.env)
+        except Exception as err:
+            print(err)
             self.server_proc = None
-        else:
-            global_vars._node_path = node_path
-            print("Trying to spawn node executable from: " + node_path)
-            try:
-                if os.name == "nt":
-                    # linux subprocess module does not have STARTUPINFO
-                    # so only use it if on Windows
-                    si = subprocess.STARTUPINFO()
-                    si.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
-                    self.server_proc = subprocess.Popen(["/Users/mattfs/gopath/bin/langserver-go"],
-                                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=si)
-                else:
-                    log.debug("opening " + node_path + " " + script_path)
-                    env = os.environ
-                    env["GOPATH"] = "/Users/mattfs/gopath"
-                    env["PATH"] = env["PATH"] + ":/usr/local/go/bin"
-                    self.server_proc = subprocess.Popen(["/Users/mattfs/gopath/bin/langserver-go"],
-                                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=env)
-            except:
-                self.server_proc = None
         # start reader thread
         if self.server_proc and (not self.server_proc.poll()):
             log.debug("server proc " + str(self.server_proc))
@@ -288,7 +267,7 @@ class ServerClient(LspCommClient):
                 self.server_proc.stdout, self.msgq, self.eventq, self.asyncReq, self.reqType, self.server_proc, self.event_handlers))
             readerThread.daemon = True
             readerThread.start()
-        self.sendCmdSync(lsp_helpers.init_message("file:///Users/mattfs/gopath/src/sourcegraph.com/sourcegraph/sourcegraph", self.server_proc.pid), 0)
+        self.postCmd(lsp_helpers.init_message("file://" + self.root_path, self.server_proc.pid))
 
     @staticmethod
     def __reader(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers):
@@ -302,29 +281,28 @@ class ServerClient(LspCommClient):
 class WorkerClient(LspCommClient):
     stop_worker = False
     
-    def __init__(self, script_path):
-        super(WorkerClient, self).__init__(script_path)
+    def __init__(self, binary_path, args, env, root_path):
+        super(WorkerClient, self).__init__(binary_path, args, env, root_path)
 
     def start(self):
         WorkerClient.stop_worker = False
 
-        node_path = global_vars.get_node_path()
         if os.name == "nt":
             si = subprocess.STARTUPINFO()
             si.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
             self.server_proc = subprocess.Popen(
-                [node_path, self.script_path], stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=si
+                self.args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=si, cwd=self.root_path, env=self.env
             )
         else:
             self.server_proc = subprocess.Popen(
-                [node_path, self.script_path], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                self.args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=self.root_path, env=self.env)
 
         # start reader thread
         if self.server_proc and (not self.server_proc.poll()):
             log.debug("worker proc " + str(self.server_proc))
             log.debug("starting worker thread")
             workerThread = threading.Thread(target=WorkerClient.__reader, args=(
-                self.server_proc.stdout, self.msgq, self.eventq, self.asyncReq, self.server_proc, self.event_handlers))
+                self.server_proc.stdout, self.msgq, self.eventq, self.asyncReq, self.reqType, self.server_proc, self.event_handlers))
             workerThread.daemon = True
             workerThread.start()
 

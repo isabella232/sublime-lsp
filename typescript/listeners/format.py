@@ -17,7 +17,7 @@ class FormatEventListener:
         log.debug("Format on key")
 
         if (
-            is_typescript(view) and
+            is_supported_ext(view) and
             cli.ts_auto_format_enabled and
             info.prev_sel and
             len(info.prev_sel) == 1 and

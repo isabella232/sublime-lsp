@@ -8,9 +8,7 @@ from .base_command import TypeScriptBaseTextCommand
 
 class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
     """Find references command"""
-    def run(self, text):
-        check_update_view(self.view)
-        references_resp = cli.service.references(self.view.file_name(), get_location_from_view(self.view))
+    def handle_references(self, references_resp):
         if references_resp["success"]:
             pos = self.view.sel()[0].begin()
             cursor = self.view.rowcol(pos)
@@ -19,6 +17,24 @@ class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
             args_json_str = json_helpers.encode(args)
             ref_view = get_ref_view()
             ref_view.run_command('typescript_populate_refs', {"argsJson": args_json_str})
+        self.view.erase_status("typescript_populate_refs")
+
+    def run(self, text):
+        check_update_view(self.view)
+        service = cli.get_service()
+        if not service:
+            return None
+        ref_view = get_ref_view()
+        ref_view.run_command('typescript_empty_refs')
+        service.references(self.view.file_name(), get_location_from_view(self.view), self.handle_references)
+
+    def is_visible(self):
+        if not cli.client_manager.has_extension(sublime.active_window().extract_variables().get('file_extension')):
+            return False
+        if len(self.view.sel()) == 0:
+            False
+        # TODO(uforic) hide if text isn't clicked on, imitating Sublime Go to def behavior
+        return True
 
 
 class TypescriptGoToRefCommand(sublime_plugin.TextCommand):
@@ -73,6 +89,23 @@ class TypescriptPrevRefCommand(sublime_plugin.TextCommand):
             ref_view.run_command('typescript_go_to_ref')
 
 
+class TypescriptEmptyRefs(sublime_plugin.TextCommand):
+    """
+    Helper command called by TypescriptFindReferences; put the references in the
+    references buffer (such as build errors)
+    """
+
+    def run(self, text):
+        self.view.set_read_only(False)
+        # erase the caret showing the last reference followed
+        self.view.erase_regions("curref")
+        # clear the references buffer
+        self.view.erase(text, sublime.Region(0, self.view.size()))
+        header = "Finding references..."
+        self.view.insert(text, self.view.text_point(0,0), header)
+        self.view.set_read_only(True)
+
+
 # TODO: generalize this to populate any type of references file
 class TypescriptPopulateRefs(sublime_plugin.TextCommand):
     """
@@ -97,9 +130,9 @@ class TypescriptPopulateRefs(sublime_plugin.TextCommand):
         self.view.erase_regions("curref")
         # clear the references buffer
         self.view.erase(text, sublime.Region(0, self.view.size()))
+        self.view.set_syntax_file("Packages/" + PLUGIN_NAME + "/FindRefs.hidden-tmLanguage")
         header = "References to {0} \n\n".format(ref_display_string)
         self.view.insert(text, self.view.sel()[0].begin(), header)
-        self.view.set_syntax_file("Packages/" + PLUGIN_NAME + "/FindRefs.hidden-tmLanguage")
         window = sublime.active_window()
         ref_info = None
         if len(refs) > 0:

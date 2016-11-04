@@ -9,4 +9,7 @@ class TypescriptSave(TypeScriptBaseTextCommand):
     TODO: safe temp file name on Windows
     """
     def run(self, text):
-        cli.service.save_to(self.view.file_name(), "/tmp/curstate")
+        service = cli.get_service()
+        if not service:
+            return None
+        service.save_to(self.view.file_name(), "/tmp/curstate")

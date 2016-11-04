@@ -7,7 +7,10 @@ class TypescriptGoToTypeCommand(TypeScriptBaseTextCommand):
     """Go to type command"""
     def run(self, text):
         check_update_view(self.view)
-        type_resp = cli.service.type(self.view.file_name(), get_location_from_view(self.view))
+        service = cli.get_service()
+        if not service:
+            return None
+        type_resp = service.type(self.view.file_name(), get_location_from_view(self.view))
         if type_resp["success"]:
             items = type_resp["body"]
             if len(items) > 0:
