@@ -143,11 +143,11 @@ def get_location_from_position(view, position):
 
 def open_file(view):
     """Open the file on the server"""
-    cli.service.open(view.file_name())
+    cli.service.open(view.file_name(), view.substr(sublime.Region(0, view.size())))
 
 def open_file_on_worker(view):
     """Open the file on the worker process"""
-    cli.service.open_on_worker(view.file_name())
+    cli.service.open_on_worker(view.file_name(), view.substr(sublime.Region(0, view.size())))
 
 def reconfig_file(view):
     """Reconfigure indentation settings for the current view
@@ -285,7 +285,7 @@ def send_replace_changes_for_regions(view, regions, insert_string):
     for region in regions:
         location = get_location_from_position(view, region.begin())
         end_location = get_location_from_position(view, region.end())
-        cli.service.change(view.file_name(), location, end_location, insert_string)
+        cli.service.change(view.file_name(), location, end_location, view.substr(sublime.Region(0, view.size())))
 
 
 def apply_edit(text, view, start_line, start_offset, end_line, end_offset, new_text=""):

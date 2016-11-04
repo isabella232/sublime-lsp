@@ -116,16 +116,16 @@ class ServiceProxy:
             self.__worker_comm.sendCmdSync(json_str, req_dict["seq"])
         return response_dict
 
-    def open(self, path):
-        args = {"file": path}
+    def open(self, path, contents):
+        args = {"file": path, "text": contents}
         req_dict = self.create_req_dict("open", args)
         json_str = json_helpers.encode(req_dict)
         self.__comm.postCmd(json_str)
         if self.__worker_comm.started():
             self.__worker_comm.postCmd(json_str)
 
-    def open_on_worker(self, path):
-        args = {"file": path}
+    def open_on_worker(self, path, contents):
+        args = {"file": path, "text": contents}
         req_dict = self.create_req_dict("open", args)
         json_str = json_helpers.encode(req_dict)
         if self.__worker_comm.started():
@@ -139,12 +139,23 @@ class ServiceProxy:
         if self.__worker_comm.started():
             self.__worker_comm.postCmd(json_str)
 
-    def references(self, path, location=Location(1, 1)):
+    def references(self, path, location=Location(1, 1), on_completed=None):
         args = {"file": path, "line": location.line, "offset": location.offset}
         req_dict = self.create_req_dict("references", args)
         json_str = json_helpers.encode(req_dict)
-        response_dict = self.__comm.sendCmdSync(json_str, req_dict["seq"])
-        return response_dict
+        callback = on_completed or (lambda: None)
+        if not IS_ST2:
+            self.__comm.sendCmdAsync(
+                json_str,
+                callback,
+                req_dict["seq"]
+            )
+        else:
+            self.__comm.sendCmd(
+                json_str,
+                callback,
+                req_dict["seq"]
+            )
 
     def reload(self, path, alternate_path):
         args = {"file": path, "tmpfile": alternate_path}

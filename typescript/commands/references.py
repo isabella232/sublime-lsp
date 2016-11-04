@@ -8,9 +8,7 @@ from .base_command import TypeScriptBaseTextCommand
 
 class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
     """Find references command"""
-    def run(self, text):
-        check_update_view(self.view)
-        references_resp = cli.service.references(self.view.file_name(), get_location_from_view(self.view))
+    def handle_references(self, references_resp):
         if references_resp["success"]:
             pos = self.view.sel()[0].begin()
             cursor = self.view.rowcol(pos)
@@ -19,6 +17,11 @@ class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
             args_json_str = json_helpers.encode(args)
             ref_view = get_ref_view()
             ref_view.run_command('typescript_populate_refs', {"argsJson": args_json_str})
+
+    def run(self, text):
+        check_update_view(self.view)
+        cli.service.references(self.view.file_name(), get_location_from_view(self.view), self.handle_references)
+        self.view.erase_status("typescript_populate_refs")
 
 
 class TypescriptGoToRefCommand(sublime_plugin.TextCommand):

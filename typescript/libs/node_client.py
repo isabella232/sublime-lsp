@@ -192,6 +192,7 @@ class NodeCommClient(CommClient):
                     # Only put in the queue if wasn't an async request
                     msgq.put(data_json)
             elif data_dict["type"] == "event":
+                print(data_dict)
                 event_name = data_dict["event"]
                 if event_name in asyncEventHandlers:
                     for cb in asyncEventHandlers[event_name]:

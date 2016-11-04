@@ -37,6 +37,7 @@ class LspCommClient(node_client.CommClient):
         self.breakpoints = []
 
         self.reqType = {}
+        self.open_file = open("/Users/mattfs/Desktop/simulate"+str(time.time()*1000.0), "w")
 
     def makeTimeoutMsg(self, cmd, seq):
         jsonDict = json_helpers.decode(cmd)
@@ -109,7 +110,6 @@ class LspCommClient(node_client.CommClient):
                 while reqSeq < seq:
                     data = self.msgq.get(True, 2)
                     dict = json_helpers.decode(data)
-                    print("HERE %s" % dict)
                     reqSeq = dict['request_seq']
                 return dict
             except queue.Empty:
@@ -128,12 +128,13 @@ class LspCommClient(node_client.CommClient):
             return False
         self.reqType[cmd["id"]] = cmd["method"]
         cmd = lsp_helpers.format_request(cmd)
+        self.open_file.write(cmd)
+        self.open_file.flush()
         print("Sending command %s" % cmd)
         if not self.server_proc:
             log.error("can not send request; node process not running")
             return False
         else:
-            cmd = cmd
             self.server_proc.stdin.write(cmd.encode())
             self.server_proc.stdin.flush()
             return True
@@ -175,11 +176,12 @@ class LspCommClient(node_client.CommClient):
             log.debug('Read body of length: {0}'.format(body_length))
             data_json = data.decode("utf-8")
             data_dict = json_helpers.decode(data_json)
-            if data_dict['result']:
+            print("RAW DATA RECEIVED %s" % data_dict)
+            print(data_dict.get('result'))
+            print(data_dict.get('id'))
+            if data_dict.get('result') is not None and data_dict.get("id") is not None:
                 msg_id = data_dict['id']
-                print("DATA RECEIVED %s" % data_dict)
                 req_type = reqType.pop(msg_id)
-                print("REQ TYPE %s" % req_type)
                 data_dict = lsp_helpers.convert_response(req_type, data_dict)
                 print("CONVERTED TYPE %s" % data_dict)
                 if data_dict is None or data_dict["type"] != "response":
@@ -187,22 +189,23 @@ class LspCommClient(node_client.CommClient):
                 log.debug('Body sequence#: {0}'.format(msg_id))
                 if msg_id in asyncReq:
                     callback = asyncReq.pop(msg_id, None)
-                    print("Async request callback is %s" % callback)
                     if callback:
                         callback(data_dict)
                 else:
                     # Only put in the queue if wasn't an async request
                     msgq.put(json_helpers.encode(data_dict))
 
-            # TODO(uforic): Deal with this later
-            # elif data_dict["type"] == "event":
-            #     event_name = data_dict["event"]
-            #     if event_name in asyncEventHandlers:
-            #         for cb in asyncEventHandlers[event_name]:
-            #             # Run <cb> asynchronously to keep read_msg as small as possible
-            #             sublime.set_timeout(lambda: cb(data_dict), 0)
-            #     else:
-            #         eventq.put(data_json)
+            else:
+                other = lsp_helpers.convert_other(data_dict)
+                if not other:
+                    return False
+                event_name = other["event"]
+                if event_name in asyncEventHandlers:
+                    for cb in asyncEventHandlers[event_name]:
+                        # Run <cb> asynchronously to keep read_msg as small as possible
+                        sublime.set_timeout(lambda: cb(other), 0)
+                else:
+                    eventq.put(data_json)
         else:
             log.info('Body length of 0 in server stream')
 
@@ -324,7 +327,7 @@ class WorkerClient(LspCommClient):
             log.debug("worker proc " + str(self.server_proc))
             log.debug("starting worker thread")
             workerThread = threading.Thread(target=WorkerClient.__reader, args=(
-                self.server_proc.stdout, self.msgq, self.eventq, self.asyncReq, self.server_proc, self.event_handlers))
+                self.server_proc.stdout, self.msgq, self.eventq, self.asyncReq, self.reqType, self.server_proc, self.event_handlers))
             workerThread.daemon = True
             workerThread.start()
 
