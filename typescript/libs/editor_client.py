@@ -1,5 +1,6 @@
 ﻿from .reference import RefInfo
-from .node_client import ServerClient, WorkerClient
+from .lsp_client import ServerClient, WorkerClient
+# from .node_client import ServerClient, WorkerClient
 from .service_proxy import ServiceProxy
 from .global_vars import *
 from . import global_vars

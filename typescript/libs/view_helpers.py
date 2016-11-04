@@ -107,7 +107,8 @@ def is_typescript(view):
         return False
 
     return (view.match_selector(location, 'source.ts') or
-            view.match_selector(location, 'source.tsx'))
+            view.match_selector(location, 'source.tsx') or 
+            view.match_selector(location, 'source.go'))
 
 
 def is_special_view(view):

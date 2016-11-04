@@ -1,4 +1,5 @@
-﻿from .node_client import NodeCommClient, ServerClient, WorkerClient
+﻿# from .node_client import NodeCommClient, ServerClient, WorkerClient
+from .lsp_client import LspCommClient, ServerClient, WorkerClient
 from .popup_manager import PopupManager
 from .service_proxy import ServiceProxy
 from .editor_client import cli, EditorClient
@@ -13,7 +14,8 @@ __all__ = [
     'logger',
     'log',
     'get_popup_manager',
-    'NodeCommClient',
+    # 'NodeCommClient',
+    'LspCommClient',
     'ServerClient',
     'WorkerClient',
     'json_helpers',
