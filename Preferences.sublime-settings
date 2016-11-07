@@ -1,4 +1,26 @@
 {
     "typescript_auto_format": false,
-    "enable_typescript_language_service": true
+    "enable_typescript_language_service": true,
+    "clients": [
+        {
+            "binary": "langserver-go",
+            "file_exts": ["go"],
+            // the go binary must be in the path
+            "path_additions": ["/usr/local/go/bin"],
+            "env": {
+                // GOPATH is a required argument, ~'s don't work
+                "GOPATH": "/Users/mattfs/gopath",
+            }
+        },
+        {
+            "binary": "/usr/local/php5/bin/php",
+            "file_exts": ["php"],
+            "args": ["-f", "/Users/mattfs/github.com/php-language-server/bin/php-language-server.php"],
+            // the go binary must be in the path
+            "path_additions": [""],
+            "env": {
+
+            }
+        }
+    ]
 }

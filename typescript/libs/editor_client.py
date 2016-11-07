@@ -1,10 +1,11 @@
 ﻿from .reference import RefInfo
 from .lsp_client import ServerClient, WorkerClient
+from .client_manager import LspClientManager
 # from .node_client import ServerClient, WorkerClient
 from .service_proxy import ServiceProxy
 from .global_vars import *
 from . import global_vars
-
+import copy
 
 class ClientFileInfo:
     """per-file, globally-accessible information"""
@@ -40,6 +41,32 @@ class EditorClient:
         self.ts_auto_format_enabled = True
         self.ts_auto_indent_enabled = True
         self.auto_match_enabled = True
+        self.client_manager = LspClientManager()
+
+    def go_specific_hack(self, env):
+        gopaths = env["GOPATH"].split(os.pathsep)
+        for gopath in gopaths:
+            env["PATH"] = gopath+os.pathsep+env["PATH"]
+
+    def initialize_client_manager(self, settings):
+        # initialize client manager
+        clients = settings.get("clients")
+        if clients:
+            for client in clients:
+                env = copy.deepcopy(os.environ)
+                path_additions = client.get("path_additions")
+                if path_additions:
+                    env["PATH"] = os.pathsep.join(path_additions)+os.pathsep+env["PATH"]
+                additional_env = client.get("env")
+                if additional_env:
+                    env.update(additional_env)
+                    if "go" in client["file_exts"]:
+                        self.go_specific_hack(env)
+                self.client_manager.register_extensions(
+                    client["file_exts"], 
+                    client["binary"],
+                    client.get("args"), 
+                    env)
 
     def initialize(self):
         """
@@ -51,6 +78,7 @@ class EditorClient:
         # retrieve the path to tsserver.js
         # first see if user set the path to the file
         settings = sublime.load_settings("Preferences.sublime-settings")
+        self.initialize_client_manager(settings)
         tsdk_location = settings.get("typescript_tsdk")
         if tsdk_location:
             proc_file = os.path.join(tsdk_location, "tsserver.js")

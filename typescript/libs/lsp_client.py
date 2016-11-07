@@ -123,6 +123,7 @@ class LspCommClient(node_client.CommClient):
         Post command to server; no response needed
         """
         log.debug('Posting command: {0}'.format(cmd))
+        print("Posting command %s" % cmd)
         cmd = lsp_helpers.convert_cmd(cmd)
         if not cmd:
             return False
@@ -291,7 +292,7 @@ class ServerClient(LspCommClient):
                 self.server_proc.stdout, self.msgq, self.eventq, self.asyncReq, self.reqType, self.server_proc, self.event_handlers))
             readerThread.daemon = True
             readerThread.start()
-        self.sendCmdSync(lsp_helpers.init_message("file:///Users/mattfs/gopath/src/sourcegraph.com/sourcegraph/sourcegraph", self.server_proc.pid), 0)
+        self.sendCmdAsync(lsp_helpers.init_message("file:///Users/mattfs/gopath/src/sourcegraph.com/sourcegraph/sourcegraph", self.server_proc.pid), None, 0)
 
     @staticmethod
     def __reader(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers):

@@ -59,6 +59,16 @@ def convert_cmd(str_cmd):
             },
         }
         return new_cmd
+    elif command == "references":
+        new_cmd["method"] = "textDocument/references"
+        new_cmd["params"] = {
+            "position": convert_position_to_lsp(args),
+            "textDocument": {
+                "uri": filename_to_uri(args["file"])
+            },
+            "includeDeclaration": False,
+        }
+        return new_cmd
     return None
 
 
@@ -202,4 +212,36 @@ def convert_response(request_type, response):
             }],
             "type": "response"
         }
+    elif request_type == "textDocument/references":
+        referencesRespBody = {
+                "refs": [],
+                "symbolName": "SymbolName",
+                "symbolDisplayString": "SymbolText",
+                "symbolStartOffset": 17
+            }
+        for entry in response["result"]:
+            referencesRespBody["refs"].append({
+                "end": convert_position_from_lsp(entry["range"]["end"]),
+                "start": convert_position_from_lsp(entry["range"]["start"]),
+                "isDefinition": False,
+                "isWriteAccess": True,
+                "file": convert_lsp_to_filename(entry["uri"]),
+                "lineText": "RandomText",
+            })
+        return {
+            "seq": 0,
+            "request_seq": response["id"],
+            "success": success,
+            "command": "references",
+            "body": referencesRespBody,
+            "type": "response"
+        }
+
     return None
+
+
+# file_name = args["filename"]
+#         line = args["line"]
+#         ref_display_string = args["referencesRespBody"]["symbolDisplayString"]
+#         ref_id = args["referencesRespBody"]["symbolName"]
+#         refs = args["referencesRespBody"]["refs"]
