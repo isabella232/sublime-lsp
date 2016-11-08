@@ -20,7 +20,10 @@ class TypescriptQuickInfo(TypeScriptBaseTextCommand):
         check_update_view(self.view)
         word_at_sel = self.view.classify(self.view.sel()[0].begin())
         if word_at_sel & SUBLIME_WORD_MASK:
-            cli.service.quick_info(self.view.file_name(), get_location_from_view(self.view), self.handle_quick_info)
+            service = cli.get_service()
+            if not service:
+                return None
+            service.quick_info(self.view.file_name(), get_location_from_view(self.view), self.handle_quick_info)
         else:
             self.view.erase_status("typescript_info")
 
@@ -65,6 +68,9 @@ class TypescriptQuickInfoDoc(TypeScriptBaseTextCommand):
         display_point = self.view.sel()[0].begin() if hover_point is None else hover_point
         word_at_sel = self.view.classify(display_point)
         if word_at_sel & SUBLIME_WORD_MASK:
-            cli.service.quick_info(self.view.file_name(), get_location_from_position(self.view, display_point), lambda response: self.handle_quick_info(response, display_point))
+            service = cli.get_service()
+            if not service:
+                return None
+            service.quick_info(self.view.file_name(), get_location_from_position(self.view, display_point), lambda response: self.handle_quick_info(response, display_point))
         else:
             self.view.erase_status("typescript_info")

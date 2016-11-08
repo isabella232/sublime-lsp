@@ -77,6 +77,9 @@ class CompletionEventListener:
         """
         Note: synchronous for now; can change to async by adding hide/show from the handler
         """
+        service = cli.get_service()
+        if not service:
+            return None
         info = get_info(view)
         if info:
             info.completion_prefix_sel = decrease_locs_to_regions(locations, len(prefix))
@@ -88,19 +91,19 @@ class CompletionEventListener:
                 check_update_view(view)
                 if IS_ST2:
                     # Send synchronous request for Sublime Text 2
-                    cli.service.completions(view.file_name(), location, prefix, self.handle_completion_info)
+                    service.completions(view.file_name(), location, prefix, self.handle_completion_info)
                 else:
                     # Send asynchronous request for Sublime Text 3
                     # 'locations' is an array because of multiple cursor support
                     self.completion_request_loc = locations[0]
                     self.completion_request_prefix = prefix
-                    self.completion_request_seq = cli.service.seq
+                    self.completion_request_seq = service.seq
                     if locations[0] > 0:
                         prev_char = view.substr(sublime.Region(locations[0] - 1, locations[0] - 1))
                         self.if_completion_request_member = (prev_char == ".")
                     else:
                         self.if_completion_request_member = False
-                    cli.service.async_completions(view.file_name(), location, prefix, self.handle_completion_info)
+                    service.async_completions(view.file_name(), location, prefix, self.handle_completion_info)
 
             completions = self.pending_completions
             info.last_completion_loc = locations[0]

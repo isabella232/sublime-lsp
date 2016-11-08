@@ -29,7 +29,10 @@ class TypescriptNavToCommand(TypeScriptBaseWindowCommand):
         # when some input text that will result in empty results is given (for example, empty
         # string), we use alternative text to ensure the panel stay active
         query_text = "a" if input_text == "" else input_text
-        response_dict = cli.service.nav_to(query_text, self.window.active_view().file_name())
+        service = cli.get_service()
+        if not service:
+            return None
+        response_dict = service.nav_to(query_text, self.window.active_view().file_name())
         if response_dict["success"]:
             items = response_dict["body"]
             self.items = items if len(items) != 0 else self.items

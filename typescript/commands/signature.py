@@ -11,7 +11,10 @@ class TypescriptSignaturePanel(TypeScriptBaseTextCommand):
         logger.log.debug('TypeScript signature panel triggered')
         self.results = []
         self.snippets = []
-        cli.service.signature_help(
+        service = cli.get_service()
+        if not service:
+            return None
+        service.signature_help(
             self.view.file_name(),
             get_location_from_view(self.view), '',
             self.on_results

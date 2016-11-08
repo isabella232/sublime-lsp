@@ -149,7 +149,8 @@ class TypeScriptEventListener(sublime_plugin.EventListener):
             cli.worker_client.stop()
 
         elif command_name == "exit":
-            cli.service.exit()
+            for client in cli.client_manager.get_clients():
+                client.exit()
 
         elif command_name in ["close_all", "close_window", "close_project"]:
             # Only set <about_to_close_all> flag if there exists at least one
@@ -254,7 +255,10 @@ class TypeScriptEventListener(sublime_plugin.EventListener):
             #     if info in most_recent_used_file_list:
             #         most_recent_used_file_list.remove(info)
             # notify the server that the file is closed
-            cli.service.close(file_name)
+            service = cli.get_service()
+            if not service:
+                return None
+            service.close(file_name)
 
         # If this is the last view that is closed by a close_all command,
         # reset <about_to_close_all> flag.

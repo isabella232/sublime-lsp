@@ -44,17 +44,6 @@
               },
               {
                 "caption": "-"
-              },
-              {
-                "command":"typescript_open_tsreact_default_setting_file",
-                "caption": "TypeScriptReact Settings – Default"
-              },
-              {
-                "command": "open_file",
-                "args": {
-                  "file": "${packages}/User/TypeScriptReact.sublime-settings"
-                },
-                "caption": "TypeScriptReact Settings – User"
               }
             ]
           }

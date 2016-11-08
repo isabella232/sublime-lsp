@@ -102,4 +102,5 @@ def plugin_unloaded():
         ref_info = cli.get_ref_info()
         if ref_info:
             ref_view.settings().set('refinfo', ref_info.as_value())
-    cli.service.exit()
+    for client in cli.client_manager.get_clients():
+        client.exit()

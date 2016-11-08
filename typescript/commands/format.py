@@ -14,8 +14,10 @@ class TypescriptFormatOnKey(TypeScriptBaseTextCommand):
         if 0 == len(key):
             return
         check_update_view(self.view)
-
-        format_response = cli.service.format_on_key(self.view.file_name(), get_location_from_view(self.view), key)
+        service = cli.get_service()
+        if not service:
+            return None
+        format_response = service.format_on_key(self.view.file_name(), get_location_from_view(self.view), key)
         if format_response["success"]:
             # logger.log.debug(str(formatResp))
             code_edits = format_response["body"]

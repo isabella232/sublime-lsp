@@ -60,10 +60,11 @@ class IdleListener:
         errors.
         """
         log.debug("on_idle")
-        view = active_view()
-        info = get_info(view)
-        if info:
-            self.request_errors(view, info, 500)
+        # TODO(uforic): There is no LSP equiavlent, inore for now
+        # view = active_view()
+        # info = get_info(view)
+        # if info:
+        #     self.request_errors(view, info, 500)
 
     def on_selection_idle(self):
         """
@@ -102,7 +103,10 @@ class IdleListener:
                     files.append(group_active_view.file_name())
                     check_update_view(group_active_view)
             if len(files) > 0:
-                cli.service.request_get_err(error_delay, files)
+                service = cli.get_service()
+                if not service:
+                    return None
+                service.request_get_err(error_delay, files)
 
     def show_errors(self, diagno_event_body, syntactic):
         """
@@ -186,7 +190,10 @@ class IdleListener:
     def request_document_highlights(self, view, info):
         if is_supported_ext(view):
             location = get_location_from_view(view)
-            cli.service.async_document_highlights(view.file_name(), location, self.highlight_occurrences)
+            service = cli.get_service()
+            if not service:
+                return None
+            service.async_document_highlights(view.file_name(), location, self.highlight_occurrences)
 
     def highlight_occurrences(self, response):
         view = active_view()

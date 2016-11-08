@@ -31,8 +31,8 @@ from .rename import (
 from .build import TypescriptBuildCommand
 from .settings import (
     TypescriptOpenPluginDefaultSettingFile,
-    TypescriptOpenTsDefaultSettingFile,
-    TypescriptOpenTsreactDefaultSettingFile
+    TypescriptOpenTsDefaultSettingFile
+    # TypescriptOpenTsreactDefaultSettingFile
 )
 
 __all__ = [
@@ -67,5 +67,5 @@ __all__ = [
     "TypescriptBuildCommand",
     "TypescriptOpenPluginDefaultSettingFile",
     "TypescriptOpenTsDefaultSettingFile",
-    "TypescriptOpenTsreactDefaultSettingFile"
+    # "TypescriptOpenTsreactDefaultSettingFile"
 ]

@@ -10,8 +10,10 @@ class TypescriptRenameCommand(TypeScriptBaseTextCommand):
     """
     def run(self, text):
         check_update_view(self.view)
-
-        rename_response = cli.service.rename(self.view.file_name(), get_location_from_view(self.view))
+        service = cli.get_service()
+        if not service:
+            return None
+        rename_response = service.rename(self.view.file_name(), get_location_from_view(self.view))
         if not rename_response['success']:
             return
 

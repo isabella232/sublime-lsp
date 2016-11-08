@@ -13,7 +13,10 @@ class TypescriptBuildCommand(sublime_plugin.WindowCommand):
             return
 
         file_name = self.window.active_view().file_name()
-        project_info = cli.service.project_info(file_name)
+        service = cli.get_service()
+        if not service:
+            return None
+        project_info = service.project_info(file_name)
         if project_info["success"]:
             body = project_info["body"]
             if ("configFileName" in body) and body["configFileName"].endswith(".json"):

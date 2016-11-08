@@ -20,7 +20,10 @@ class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
 
     def run(self, text):
         check_update_view(self.view)
-        cli.service.references(self.view.file_name(), get_location_from_view(self.view), self.handle_references)
+        service = cli.get_service()
+        if not service:
+            return None
+        service.references(self.view.file_name(), get_location_from_view(self.view), self.handle_references)
         self.view.erase_status("typescript_populate_refs")
 
 
