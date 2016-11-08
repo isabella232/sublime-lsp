@@ -126,8 +126,7 @@ class LspCommClient(node_client.CommClient):
         """
         Post command to server; no response needed
         """
-        log.debug('Posting command: {0}'.format(cmd))
-        print("Posting command %s" % cmd)
+        log.debug('Received order to post command: {0}'.format(cmd))
         cmd = lsp_helpers.convert_cmd(cmd)
         if not cmd:
             return False
@@ -135,7 +134,7 @@ class LspCommClient(node_client.CommClient):
         cmd = lsp_helpers.format_request(cmd)
         self.open_file.write(cmd)
         self.open_file.flush()
-        print("Sending command %s" % cmd)
+        log.debug('Sending command: {0}'.format(cmd))
         if not self.server_proc:
             log.error("can not send request; node process not running")
             return False
@@ -181,14 +180,13 @@ class LspCommClient(node_client.CommClient):
             log.debug('Read body of length: {0}'.format(body_length))
             data_json = data.decode("utf-8")
             data_dict = json_helpers.decode(data_json)
-            print("RAW DATA RECEIVED %s" % data_dict)
-            print(data_dict.get('result'))
-            print(data_dict.get('id'))
+            
+            log.debug('Received raw data: {0}'.format(data_dict))
             if data_dict.get('result') is not None and data_dict.get("id") is not None:
                 msg_id = data_dict['id']
                 req_type = reqType.pop(msg_id)
                 data_dict = lsp_helpers.convert_response(req_type, data_dict)
-                print("CONVERTED TYPE %s" % data_dict)
+                log.debug('Converted raw data: {0}'.format(data_dict))
                 if data_dict is None or data_dict["type"] != "response":
                     return False
                 log.debug('Body sequence#: {0}'.format(msg_id))
@@ -246,48 +244,24 @@ class ServerClient(LspCommClient):
         The script file to run is passed to the constructor.
         """
         super(ServerClient, self).__init__(binary_path, args, env, root_path)
-
-        # start node process
-        pref_settings = sublime.load_settings('Preferences.sublime-settings')
-        node_path = pref_settings.get('node_path')
-        if node_path:
-            print("Path of node executable is configured as: " + node_path)
-            configured_node_path = os.path.expandvars(node_path)
-            if LspCommClient.is_executable(configured_node_path):
-                node_path = configured_node_path
-            else:
-                node_path = None
-                print("Configured node path is not a valid executable.")
-        if not node_path:
+        print("Trying to spawn executable from: " + binary_path)
+        try:
             if os.name == "nt":
-                node_path = "node"
+                # linux subprocess module does not have STARTUPINFO
+                # so only use it if on Windows
+                si = subprocess.STARTUPINFO()
+                si.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
+                self.server_proc = subprocess.Popen(self.args,
+                                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=si, cwd=self.root_path, env=self.env)
             else:
-                node_path = LspCommClient.which("node")
-        if not node_path:
-            path_list = os.environ["PATH"] + os.pathsep + "/usr/local/bin" + os.pathsep + "$NVM_BIN"
-            print("Unable to find executable file for node on path list: " + path_list)
-            print("To specify the node executable file name, use the 'node_path' setting")
+                log.debug("opening " + binary_path)
+                print(self.env)
+                print(self.root_path)
+                self.server_proc = subprocess.Popen(self.args,
+                                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=self.root_path, env=self.env)
+        except Exception as err:
+            print(err)
             self.server_proc = None
-        else:
-            global_vars._node_path = node_path
-            print("Trying to spawn node executable from: " + node_path)
-            try:
-                if os.name == "nt":
-                    # linux subprocess module does not have STARTUPINFO
-                    # so only use it if on Windows
-                    si = subprocess.STARTUPINFO()
-                    si.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
-                    self.server_proc = subprocess.Popen(self.args,
-                                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=si, cwd=self.root_path, env=self.env)
-                else:
-                    log.debug("opening " + node_path + " " + binary_path)
-                    print(self.env)
-                    print(self.root_path)
-                    self.server_proc = subprocess.Popen(self.args,
-                                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=self.root_path, env=self.env)
-            except Exception as err:
-                print(err)
-                self.server_proc = None
         # start reader thread
         if self.server_proc and (not self.server_proc.poll()):
             log.debug("server proc " + str(self.server_proc))
@@ -316,7 +290,6 @@ class WorkerClient(LspCommClient):
     def start(self):
         WorkerClient.stop_worker = False
 
-        node_path = global_vars.get_node_path()
         if os.name == "nt":
             si = subprocess.STARTUPINFO()
             si.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
