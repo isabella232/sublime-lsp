@@ -237,7 +237,7 @@ class ServerClient(NodeCommClient):
         super(ServerClient, self).__init__(script_path)
 
         # start node process
-        pref_settings = sublime.load_settings('Preferences.sublime-settings')
+        pref_settings = sublime.load_settings('LangserverConnector.sublime-settings')
         node_path = pref_settings.get('node_path')
         if node_path:
             print("Path of node executable is configured as: " + node_path)

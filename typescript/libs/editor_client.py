@@ -96,18 +96,18 @@ class EditorClient:
 
         # retrieve the path to tsserver.js
         # first see if user set the path to the file
-        settings = sublime.load_settings("Preferences.sublime-settings")
+        settings = sublime.load_settings("LangserverConnector.sublime-settings")
         self.initialize_client_manager(settings)
-        tsdk_location = settings.get("typescript_tsdk")
-        if tsdk_location:
-            proc_file = os.path.join(tsdk_location, "tsserver.js")
-            global_vars._tsc_path = os.path.join(tsdk_location, "tsc.js")
-        else:
-            # otherwise, get tsserver.js from package directory
-            proc_file = os.path.join(PLUGIN_DIR, "tsserver", "tsserver.js")
-            global_vars._tsc_path = os.path.join(PLUGIN_DIR, "tsserver", "tsc.js")
-        print("Path of tsserver.js: " + proc_file)
-        print("Path of tsc.js: " + get_tsc_path())
+        # tsdk_location = settings.get("typescript_tsdk")
+        # if tsdk_location:
+        #     proc_file = os.path.join(tsdk_location, "tsserver.js")
+        #     global_vars._tsc_path = os.path.join(tsdk_location, "tsc.js")
+        # else:
+        #     # otherwise, get tsserver.js from package directory
+        #     proc_file = os.path.join(PLUGIN_DIR, "tsserver", "tsserver.js")
+        #     global_vars._tsc_path = os.path.join(PLUGIN_DIR, "tsserver", "tsc.js")
+        # print("Path of tsserver.js: " + proc_file)
+        # print("Path of tsc.js: " + get_tsc_path())
 
         # self.node_client = ServerClient(proc_file)
         # self.worker_client = WorkerClient(proc_file)
@@ -128,7 +128,7 @@ class EditorClient:
         self.initialized = True
 
     def load_format_settings(self):
-        settings = sublime.load_settings('Preferences.sublime-settings')
+        settings = sublime.load_settings('LangserverConnector.sublime-settings')
         self.tab_size = settings.get('tab_size', 4)
         self.indent_size = settings.get('indent_size', self.tab_size)
         self.translate_tab_to_spaces = settings.get('translate_tabs_to_spaces', False)

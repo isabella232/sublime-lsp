@@ -312,10 +312,10 @@ def get_popup_manager():
     return _popup_manager
 
 def _set_up_popup_style():
-    settings = sublime.load_settings('Preferences.sublime-settings')
+    settings = sublime.load_settings('LangserverConnector.sublime-settings')
     settings.add_on_change('typescript_popup_font_size', _reload_popup_style)
     _reload_popup_style()
 
 def _reload_popup_style():
-    settings = sublime.load_settings('Preferences.sublime-settings')
+    settings = sublime.load_settings('LangserverConnector.sublime-settings')
     PopupManager.font_size = settings.get('typescript_popup_font_size', _POPUP_DEFAULT_FONT_SIZE)
