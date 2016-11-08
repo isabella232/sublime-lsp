@@ -2,7 +2,7 @@
 import sublime_plugin
 
 from ..libs import cli, log, global_vars
-from ..libs.view_helpers import active_view, get_info, is_typescript, active_view
+from ..libs.view_helpers import active_view, get_info, is_supported_ext, active_view
 from ..libs.panel_manager import get_panel_manager
 from ..listeners.error_list import start_timer
 from .base_command import TypeScriptBaseWindowCommand
@@ -10,7 +10,7 @@ from .base_command import TypeScriptBaseWindowCommand
 class TypescriptProjectErrorList(sublime_plugin.WindowCommand):
 
     def is_enabled(self):
-        return is_typescript(active_view()) and not global_vars.IS_ST2 and global_vars.get_language_service_enabled()
+        return is_supported_ext(active_view()) and not global_vars.IS_ST2 and global_vars.get_language_service_enabled()
 
     def run(self):
         panel_manager = get_panel_manager()

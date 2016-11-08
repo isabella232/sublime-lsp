@@ -32,7 +32,6 @@ class EditorClient:
         self.tmpseq = 0
         # self.node_client = None
         # self.worker_client = None
-        self.service = None
         self.initialized = False
 
         self.tab_size = 4
@@ -113,7 +112,6 @@ class EditorClient:
         # self.node_client = ServerClient(proc_file)
         # self.worker_client = WorkerClient(proc_file)
         # self.service = ServiceProxy(self.worker_client, self.node_client)
-        self.service = self.client_manager.get_client("go", "/Users/mattfs/gopath/src/sourcegraph.com/sourcegraph/sourcegraph")
 
         # load formatting settings and set callbacks for setting changes
         for setting_name in [

@@ -75,7 +75,7 @@ class TypescriptPasteAndFormat(TypeScriptBaseTextCommand):
         return True
 
     def run(self, text):
-        if is_typescript(self.view) and get_language_service_enabled():
+        if is_supported_ext(self.view) and get_language_service_enabled():
             self._run(text)
         else:
             # fall back to default paste command

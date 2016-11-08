@@ -184,7 +184,7 @@ class IdleListener:
             view.run_command('typescript_quick_info')
 
     def request_document_highlights(self, view, info):
-        if is_typescript(view):
+        if is_supported_ext(view):
             location = get_location_from_view(view)
             cli.service.async_document_highlights(view.file_name(), location, self.highlight_occurrences)
 

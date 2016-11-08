@@ -48,7 +48,7 @@ def get_info(view, open_if_not_cached=True):
     info = None
     if view is not None and view.file_name() is not None:
         file_name = view.file_name()
-        if is_typescript(view):
+        if is_supported_ext(view):
             info = _file_map.get(file_name)
             if open_if_not_cached:
                 if not info or info.is_open is False:
@@ -96,7 +96,7 @@ def active_window():
     return sublime.active_window()
 
 
-def is_typescript(view):
+def is_supported_ext(view):
     """Test if the outer syntactic scope is 'source.ts' or 'source.tsx' """
     if not view.file_name():
         return False
@@ -106,9 +106,11 @@ def is_typescript(view):
     except:
         return False
 
-    return (view.match_selector(location, 'source.ts') or
-            view.match_selector(location, 'source.tsx') or 
-            view.match_selector(location, 'source.go'))
+    for selector in cli.client_manager.extension_mapping.keys():
+        if view.match_selector(location, "source.%s" % selector):
+            return True
+
+    return False
 
 
 def is_special_view(view):
@@ -183,7 +185,7 @@ def reconfig_file(view):
             "convertTabsToSpaces": translate_tabs_to_spaces
         }
         view_settings.set('typescript_plugin_format_options', format_options)
-        cli.Fservice.configure(host_info, view.file_name(), format_options)
+        service.configure(host_info, view.file_name(), format_options)
         return True
     return False
 
@@ -289,7 +291,7 @@ def check_update_view(view):
     If we have changes to the view not accounted for by change messages, 
     send the whole buffer through a temporary file
     """
-    if is_typescript(view):
+    if is_supported_ext(view):
         client_info = cli.get_or_add_file(view.file_name())
         if reload_required(view):
             reload_buffer(view, client_info)
@@ -300,7 +302,7 @@ def send_replace_changes_for_regions(view, regions, insert_string):
     Given a list of regions and a (possibly zero-length) string to insert, 
     send the appropriate change information to the server.
     """
-    if not is_typescript(view):
+    if not is_supported_ext(view):
         return
     service = cli.get_service()
     if not service:
@@ -345,7 +347,7 @@ def insert_text(view, edit, loc, text):
 
 def format_range(text, view, begin, end):
     """Format a range of locations in the view"""
-    if not is_typescript(view):
+    if not is_supported_ext(view):
         print("To run this command, please first assign a file name to the view")
         return
     check_update_view(view)

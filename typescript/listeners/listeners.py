@@ -110,7 +110,7 @@ class TypeScriptEventListener(sublime_plugin.EventListener):
         """
         log.debug("on_selection_modified")
         # Todo: why do we only check this here? anyway to globally disable the listener for non-ts files
-        if not is_typescript(view):
+        if not is_supported_ext(view):
             return
 
         EventHub.run_listeners("on_selection_modified", view)
