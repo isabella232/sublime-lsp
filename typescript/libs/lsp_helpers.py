@@ -156,14 +156,8 @@ def convert_other(msg):
                 "file": convert_lsp_to_filename(params["uri"]),
                 "diagnostics": [{
                     "text": diag["message"],
-                    "start": {
-                        "line": diag["range"]["start"]["line"]+1,
-                        "offset": diag["range"]["start"]["character"]+1,
-                    },
-                    "end": {
-                        "line": diag["range"]["end"]["line"]+1,
-                        "offset": diag["range"]["end"]["character"]+2,
-                    },
+                    "start": convert_position_from_lsp(diag["range"]["start"]),
+                    "end": convert_position_from_lsp(diag["range"]["end"]),
                 }]
             }
         }
