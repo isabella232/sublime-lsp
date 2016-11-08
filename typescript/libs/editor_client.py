@@ -145,7 +145,10 @@ class EditorClient:
             "indentSize": self.indent_size,
             "convertTabsToSpaces": self.translate_tab_to_spaces
         }
-        self.get_service().configure(host_info, None, format_options)
+        service = self.get_service()
+        if not service:
+            return None
+        service.configure(host_info, None, format_options)
 
     # ref info is for Find References view
     # TODO: generalize this so that there can be multiple

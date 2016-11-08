@@ -17,14 +17,16 @@ class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
             args_json_str = json_helpers.encode(args)
             ref_view = get_ref_view()
             ref_view.run_command('typescript_populate_refs', {"argsJson": args_json_str})
+        self.view.erase_status("typescript_populate_refs")
 
     def run(self, text):
         check_update_view(self.view)
         service = cli.get_service()
         if not service:
             return None
+        ref_view = get_ref_view()
+        ref_view.run_command('typescript_empty_refs')
         service.references(self.view.file_name(), get_location_from_view(self.view), self.handle_references)
-        self.view.erase_status("typescript_populate_refs")
 
     def is_visible(self):
         if not cli.client_manager.has_extension(sublime.active_window().extract_variables().get('file_extension')):
@@ -85,6 +87,23 @@ class TypescriptPrevRefCommand(sublime_plugin.TextCommand):
             pos = ref_view.text_point(int(line), 0)
             set_caret_pos(ref_view, pos)
             ref_view.run_command('typescript_go_to_ref')
+
+
+class TypescriptEmptyRefs(sublime_plugin.TextCommand):
+    """
+    Helper command called by TypescriptFindReferences; put the references in the
+    references buffer (such as build errors)
+    """
+
+    def run(self, text):
+        self.view.set_read_only(False)
+        # erase the caret showing the last reference followed
+        self.view.erase_regions("curref")
+        # clear the references buffer
+        self.view.erase(text, sublime.Region(0, self.view.size()))
+        header = "Finding references..."
+        self.view.insert(text, self.view.text_point(0,0), header)
+        self.view.set_read_only(True)
 
 
 # TODO: generalize this to populate any type of references file

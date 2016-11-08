@@ -16,5 +16,5 @@ class TypescriptOpenTsDefaultSettingFile(sublime_plugin.WindowCommand):
         
 # class TypescriptOpenTsreactDefaultSettingFile(sublime_plugin.WindowCommand):
 #     def run(self):
-#         default_tsreact_setting_path = os.path.join(PLUGIN_DIR, ".sublime-settings")
+#         default_tsreact_setting_path = os.path.join(PLUGIN_DIR, "TypeScriptReact.sublime-settings")
 #         sublime.active_window().open_file(default_tsreact_setting_path)

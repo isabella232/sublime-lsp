@@ -20,6 +20,7 @@ from .references import (
     TypescriptFindReferencesCommand,
     TypescriptGoToRefCommand,
     TypescriptNextRefCommand,
+    TypescriptEmptyRefs,
     TypescriptPopulateRefs,
     TypescriptPrevRefCommand
 )
@@ -55,6 +56,7 @@ __all__ = [
     "TypescriptFindReferencesCommand",
     "TypescriptGoToDefinitionCommand",
     "TypescriptNextRefCommand",
+    "TypescriptEmptyRefs",
     "TypescriptPopulateRefs",
     "TypescriptPrevRefCommand",
     "TypescriptDelayedRenameFile",

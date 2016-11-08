@@ -22,26 +22,23 @@ class LspClientManager():
 
     def get_client(self, file_ext, root_path):
         if file_ext not in self.extension_mapping:
-            return FileExtensionNotRegistered(file_ext)
+            return None
+            # return FileExtensionNotRegistered(file_ext)
         binary_name, args, env = self.extension_mapping[file_ext]
         key = (root_path, binary_name)
         if key in self.client_mapping:
             return self.client_mapping[key]
         try:
-            print("HERE1")
             node_client = ServerClient(binary_name, args, env, root_path)
-            print("HERE2")
             worker_client = WorkerClient(binary_name, args, env, root_path)
-            print("HERE3")
             service = ServiceProxy(worker_client, node_client)
-            print("HERE4")
             self.client_mapping[key] = service
             return service
         except Exception as err:
             # Deal with process init failure
-            print(err)
-            return ProcessFailsToStart(
-                file_ext, binary_name, args, env)
+            return None
+            # return ProcessFailsToStart(
+            #     file_ext, binary_name, args, env)
 
     def has_extension(self, ext):
         return self.extension_mapping.get(ext) is not None
