@@ -1,6 +1,12 @@
 from . import json_helpers
+import sublime
 import json
-
+if int(sublime.version()) < 3000:
+    import urllib
+    from urlparse import urljoin
+else:
+    import urllib.request as urllib
+    from urllib.parse import urljoin
 
 def init_message(root_path, process_id):
     cmd = {
@@ -126,8 +132,7 @@ def convert_filename_to_lsp(args, version=None):
 
 
 def filename_to_uri(filename):
-    return "file://"+filename
-
+    return urljoin('file:', urllib.pathname2url(filename))
 
 def convert_lsp_to_filename(uri):
     return uri[len("file://"):]

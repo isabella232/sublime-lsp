@@ -28,11 +28,9 @@ This plugin has been developed for use with the [go-langserver](https://github.c
 
 ## Installation
 
-### Go installation
+### Connector installation
 
-First, install the `langserver-go` binary by running `go get -u github.com/sourcegraph/go-langserver/langserver/cmd/langserver-go`. The `langserver-go` binary should now be available via your command line.
-
-Next, install the `lsp-sublime` connector for Sublime Text by cloning `lsp-sublime` repository into your Sublime Text 3 Packages folder:
+Install the `lsp-sublime` connector for Sublime Text by cloning `lsp-sublime` repository into your Sublime Text 3 Packages folder:
 
 macOS:
 
@@ -46,12 +44,33 @@ Linux:
 git clone git@github.com:sourcegraph/lsp-sublime.git ~/.config/sublime-text-3/Packages/lsp-sublime
 ```
 
-Next, configure the LSP connector for the `langserver-go` binary. To change your Sourcegraph settings, open `SublimeLsp.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Sublime Lsp Connector > Settings - User`.
+Windows:
 
+```bat
+cd "%APPDATA%\Sublime Text 3\Packages"
+git clone https://github.com/sourcegraph/sublime-lsp
 ```
+
+### Go installation
+
+Install the `langserver-go` binary by running `go get -u github.com/sourcegraph/go-langserver/langserver/cmd/langserver-go`. The `langserver-go` binary should now be available via your command line.
+
+Next, configure the LSP connector for the `langserver-go` binary. To change your Sourcegraph settings, open `SublimeLsp.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Sublime Lsp Connector > Settings - User`.
+Find there `clients` section, if it does not exist, create it the following way
+
+```json
 {
-    ...
+...
     "clients": [
+    ]
+...
+}
+```
+
+Then, add the following client descriptor into `clients` section
+
+```json
+{
         {
             "binary": "langserver-go",
             "file_exts": ["go"],
@@ -62,12 +81,50 @@ Next, configure the LSP connector for the `langserver-go` binary. To change your
                 "GOPATH": "",
             }
         }
-    ]
-    ...
 }
 ```
 
 Finally, restart Sublime Text to start using the plugin. You may want to [disable Sublime's native tooltips](https://github.com/sourcegraph/lsp-sublime#remove-sublime-text-3-tooltips-and-goto-menu-items), as they are duplicative and interfere with this connector's tooltips.  
+
+### TypeScript/JavaScript installation
+
+Install the TypeScript/JavaScript LSP server the following way:
+
+```shell
+export JSTS_DIR=...
+git clone https://github.com/sourcegraph/javascript-typescript-langserver $JSTS_DIR
+cd $JSTS_DIR
+npm install
+node_modules/.bin/tsc
+```
+
+Please make sure that `$JSTS_DIR/bin` is in `$PATH`
+
+Next, register TypeScript/JavaScript LSP client. To change your Sourcegraph settings, open `SublimeLsp.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Sublime Lsp Connector > Settings - User`.
+Find there `clients` section, if it does not exist, create it the following way
+
+```json
+{
+...
+    "clients": [
+    ]
+...
+}
+```
+
+Then, add the following client descriptor into `clients` section
+
+```json
+{
+        {
+            "binary": "javascript-typescript-sublime",
+            "file_exts": ["ts", "tsx", "js", "jsx"]
+        }
+}
+```
+
+Finally, restart Sublime Text to start using the plugin. You may want to [disable Sublime's native tooltips](https://github.com/sourcegraph/lsp-sublime#remove-sublime-text-3-tooltips-and-goto-menu-items), as they are duplicative and interfere with this connector's tooltips.  
+
 
 ## Usage
 
