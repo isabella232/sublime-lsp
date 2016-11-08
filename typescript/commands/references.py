@@ -26,6 +26,14 @@ class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
         service.references(self.view.file_name(), get_location_from_view(self.view), self.handle_references)
         self.view.erase_status("typescript_populate_refs")
 
+    def is_visible(self):
+        if not cli.client_manager.has_extension(sublime.active_window().extract_variables().get('file_extension')):
+            return False
+        if len(self.view.sel()) == 0:
+            False
+        # TODO(uforic) hide if text isn't clicked on, imitating Sublime Go to def behavior
+        return True
+
 
 class TypescriptGoToRefCommand(sublime_plugin.TextCommand):
     """
