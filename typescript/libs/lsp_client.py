@@ -296,7 +296,7 @@ class ServerClient(LspCommClient):
                 self.server_proc.stdout, self.msgq, self.eventq, self.asyncReq, self.reqType, self.server_proc, self.event_handlers))
             readerThread.daemon = True
             readerThread.start()
-        self.sendCmdAsync(lsp_helpers.init_message("file://" + self.root_path, self.server_proc.pid), None, 0)
+        self.postCmd(lsp_helpers.init_message("file://" + self.root_path, self.server_proc.pid))
 
     @staticmethod
     def __reader(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers):
