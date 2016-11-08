@@ -35,6 +35,7 @@ from .settings import (
     TypescriptOpenTsDefaultSettingFile
     # TypescriptOpenTsreactDefaultSettingFile
 )
+from .browse import BrowseCode
 
 __all__ = [
     "TypescriptAutoIndentOnEnterBetweenCurlyBrackets",
@@ -70,4 +71,5 @@ __all__ = [
     "TypescriptOpenPluginDefaultSettingFile",
     "TypescriptOpenTsDefaultSettingFile",
     # "TypescriptOpenTsreactDefaultSettingFile"
+    "BrowseCode"
 ]
