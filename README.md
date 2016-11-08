@@ -18,7 +18,7 @@ This connector currently supports:
 * [hover](https://github.com/sourcegraph/lsp-sublime#hover) operations (Sublime build >=3124)
 * [goto definition](https://github.com/sourcegraph/lsp-sublime#go-to-definition)
 * [find all references](https://github.com/sourcegraph/lsp-sublime#find-all-references)
-* [error highlighting](#)
+* [error highlighting](https://github.com/sourcegraph/lsp-sublime#diagnostics)
 
 Autocomplete, semantic symbol-based search, formatting utilities will soon be supported.
 
@@ -46,7 +46,7 @@ Linux:
 git clone git@github.com:sourcegraph/lsp-sublime.git ~/.config/sublime-text-3/Packages/lsp-sublime
 ```
 
-Next, configure the LSP connector for the `langserver-go` binary. To change your Sourcegraph settings, open `LspSublime.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > LspSublime > Settings - User`.
+Next, configure the LSP connector for the `langserver-go` binary. To change your Sourcegraph settings, open `LangserverConnector.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Langserver-Connetor > Settings - User`.
 
 ```
 {
@@ -75,19 +75,25 @@ Finally, restart Sublime Text to start using the plugin. You may want to [disabl
 
 As you navigate through Go files, when your cursor is on a symbol, you should see hover tooltips. You may have to [disable Sublime's native tooltips](https://github.com/sourcegraph/lsp-sublime#remove-sublime-text-3-tooltips-and-goto-menu-items).
 
-![hover tooltips](images/hover.gif)
+![hover tooltips](screenshots/hover.gif)
 
 ### Goto definition
 
 [Execute](https://github.com/sourcegraph/lsp-sublime#open-the-command-window) the `Langserver: Goto definition` command, and Sublime will jump to the definition of a symbol in your workspace.
 
-![goto def](images/def.gif)
+![goto def](screenshots/def.gif)
 
 ### Find all references
 
 [Execute](https://github.com/sourcegraph/lsp-sublime#open-the-command-window) the `Langserver: Find all references` command, and Sublime will open up a results pane with semantic references to the symbols within your project.
 
-![find all references](images/refs.png)
+![find all references](screenshots/refs.png)
+
+### Diagnostics
+
+As you type, the language server connector will receive diagnostics from the language server. If any errors are detected, the editor will display a tooltip when the offending text is clicked.
+
+![find all references](screenshots/diagnostic.png)
 
 ## Troubleshooting
 
@@ -119,7 +125,7 @@ To open Sublime's command window and access LSP connector operations, just execu
 
 Any search items starting with `Language Server` is provided by the LSP connector.
 
-![command bar access](images/toolbar.png)
+![command bar access](screenshots/toolbar.png)
 
 ### Add right click menu options
 
