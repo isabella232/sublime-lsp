@@ -1,3 +1,4 @@
+import logging
 import copy
 import os
 import subprocess
@@ -41,7 +42,6 @@ class LspCommClient(node_client.CommClient):
         self.breakpoints = []
 
         self.reqType = {}
-        self.open_file = open("/Users/mattfs/Desktop/simulate"+str(time.time()*1000.0), "w")
 
     def makeTimeoutMsg(self, cmd, seq):
         jsonDict = json_helpers.decode(cmd)
@@ -132,9 +132,7 @@ class LspCommClient(node_client.CommClient):
             return False
         self.reqType[cmd["id"]] = cmd["method"]
         cmd = lsp_helpers.format_request(cmd)
-        self.open_file.write(cmd)
-        self.open_file.flush()
-        log.debug('Sending command: {0}'.format(cmd))
+        log.debug('Sending command: {0}'.format(cmd.splitlines()))
         if not self.server_proc:
             log.error("can not send request; node process not running")
             return False
@@ -255,8 +253,6 @@ class ServerClient(LspCommClient):
                                                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=si, cwd=self.root_path, env=self.env)
             else:
                 log.debug("opening " + binary_path)
-                print(self.env)
-                print(self.root_path)
                 self.server_proc = subprocess.Popen(self.args,
                                                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=self.root_path, env=self.env)
         except Exception as err:

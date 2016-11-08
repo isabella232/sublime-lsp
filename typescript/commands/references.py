@@ -130,9 +130,9 @@ class TypescriptPopulateRefs(sublime_plugin.TextCommand):
         self.view.erase_regions("curref")
         # clear the references buffer
         self.view.erase(text, sublime.Region(0, self.view.size()))
+        self.view.set_syntax_file("Packages/" + PLUGIN_NAME + "/FindRefs.hidden-tmLanguage")
         header = "References to {0} \n\n".format(ref_display_string)
         self.view.insert(text, self.view.sel()[0].begin(), header)
-        self.view.set_syntax_file("Packages/" + PLUGIN_NAME + "/FindRefs.hidden-tmLanguage")
         window = sublime.active_window()
         ref_info = None
         if len(refs) > 0:
