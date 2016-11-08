@@ -195,11 +195,12 @@ class LspCommClient(node_client.CommClient):
                 else:
                     # Only put in the queue if wasn't an async request
                     msgq.put(json_helpers.encode(data_dict))
-
             else:
                 other = lsp_helpers.convert_other(data_dict)
                 if not other:
+                    log.debug('Could not convert raw data.')
                     return False
+                log.debug('Converted server generated data:{0}'.format(other))
                 event_name = other["event"]
                 if event_name in asyncEventHandlers:
                     for cb in asyncEventHandlers[event_name]:

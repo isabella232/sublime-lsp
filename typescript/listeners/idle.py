@@ -60,11 +60,10 @@ class IdleListener:
         errors.
         """
         log.debug("on_idle")
-        # TODO(uforic): There is no LSP equiavlent, inore for now
-        # view = active_view()
-        # info = get_info(view)
-        # if info:
-        #     self.request_errors(view, info, 500)
+        view = active_view()
+        info = get_info(view)
+        if info:
+            self.request_errors(view, info, 500)
 
     def on_selection_idle(self):
         """
@@ -84,9 +83,10 @@ class IdleListener:
         Ask the server for diagnostic information on all opened ts files in
         most-recently-used order
         """
+        service = cli.get_service()
         if not self.event_handler_added:
-            cli.service.add_event_handler("syntaxDiag", lambda ev: self.show_errors(ev["body"], syntactic=True))
-            cli.service.add_event_handler("semanticDiag", lambda ev: self.show_errors(ev["body"], syntactic=False))
+            service.add_event_handler("syntaxDiag", lambda ev: self.show_errors(ev["body"], syntactic=True))
+            service.add_event_handler("semanticDiag", lambda ev: self.show_errors(ev["body"], syntactic=False))
             self.event_handler_added = True
 
         # Todo: limit this request to ts files currently visible in views
