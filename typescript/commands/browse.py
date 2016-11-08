@@ -14,8 +14,9 @@ class BrowseCode(TypeScriptBaseTextCommand):
         root_directory = get_root_path()
         file_path = sublime.active_window().extract_variables().get('file')
         git_url_struct = get_url_struct(root_directory, file_path)
+        if git_url_struct is None:
+            self.view.set_status("typescript_error", "Error assembling url for %s" % file_path)
         row, col = self.view.rowcol(self.view.sel()[0].begin())
-        print(git_url_struct)
         sourcegraph_url = "https://sourcegraph.com/"+git_url_struct[0]+"@"+git_url_struct[1]+"/-/blob/"+git_url_struct[2]+"#L"+str(row+1)
         print(sourcegraph_url)
         webbrowser.open(sourcegraph_url)

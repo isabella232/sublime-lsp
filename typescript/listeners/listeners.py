@@ -145,7 +145,11 @@ class TypeScriptEventListener(sublime_plugin.EventListener):
     def on_window_command(self, window, command_name, args):
         log.debug("on_window_command")
 
-        if command_name == "hide_panel" and cli.worker_client.started():
+        service = cli.get_service()
+        if not service:
+            return
+
+        if command_name == "hide_panel" and service.__worker_comm.started():
             cli.worker_client.stop()
 
         elif command_name == "exit":
