@@ -143,11 +143,17 @@ def get_location_from_position(view, position):
 
 def open_file(view):
     """Open the file on the server"""
-    cli.service.open(view.file_name(), view.substr(sublime.Region(0, view.size())))
+    service = cli.get_service()
+    if not service:
+        return None
+    service.open(view.file_name(), view.substr(sublime.Region(0, view.size())))
 
 def open_file_on_worker(view):
     """Open the file on the worker process"""
-    cli.service.open_on_worker(view.file_name(), view.substr(sublime.Region(0, view.size())))
+    service = cli.get_service()
+    if not service:
+        return None
+    service.open_on_worker(view.file_name(), view.substr(sublime.Region(0, view.size())))
 
 def reconfig_file(view):
     """Reconfigure indentation settings for the current view
@@ -163,6 +169,10 @@ def reconfig_file(view):
     translate_tabs_to_spaces = view_settings.get('translate_tabs_to_spaces', True)
 
     prev_format_options = view_settings.get('typescript_plugin_format_options')
+    # TODO(uforic): determine if this is even needed here
+    service = cli.get_service()
+    if not service:
+        return False
     if prev_format_options == None \
         or prev_format_options['tabSize'] != tab_size \
         or prev_format_options['indentSize'] != indent_size \
@@ -173,7 +183,7 @@ def reconfig_file(view):
             "convertTabsToSpaces": translate_tabs_to_spaces
         }
         view_settings.set('typescript_plugin_format_options', format_options)
-        cli.service.configure(host_info, view.file_name(), format_options)
+        cli.Fservice.configure(host_info, view.file_name(), format_options)
         return True
     return False
 
@@ -200,7 +210,10 @@ def set_caret_pos(view, pos):
 
 def get_tempfile_name():
     """Get the first unused temp file name to avoid conflicts"""
-    seq = cli.service.seq
+    service = cli.get_service()
+    if not service:
+        return None
+    seq = service.seq
     if len(cli.available_tempfile_list) > 0:
         tempfile_name = cli.available_tempfile_list.pop()
     else:
@@ -230,12 +243,16 @@ def reload_buffer(view, client_info=None):
         if not client_info:
             client_info = cli.get_or_add_file(view.file_name())
 
+        service = cli.get_service()
+        if not service:
+            return None
+
         if not IS_ST2:
-            cli.service.reload_async(view.file_name(), tmpfile_name, recv_reload_response)
+            service.reload_async(view.file_name(), tmpfile_name, recv_reload_response)
             client_info.change_count = view.change_count()
         else:
             # Sublime 2 doesn't have good support for multi threading
-            reload_response = cli.service.reload(view.file_name(), tmpfile_name)
+            reload_response = service.reload(view.file_name(), tmpfile_name)
             recv_reload_response(reload_response)
             info = get_info(view)
             client_info.change_count = info.modify_count
@@ -247,15 +264,18 @@ def reload_buffer_on_worker(view):
     Note: the worker process won't change the client_info object to avoid synchronization issues
     """
     if not view.is_loading():
+        service = cli.get_service()
+        if not service:
+            return None
         tmpfile_name = get_tempfile_name()
         tmpfile = codecs.open(tmpfile_name, "w", "utf-8")
         text = view.substr(sublime.Region(0, view.size()))
         tmpfile.write(text)
         tmpfile.flush()
         if not IS_ST2:
-            cli.service.reload_async_on_worker(view.file_name(), tmpfile_name, recv_reload_response)
+            service.reload_async_on_worker(view.file_name(), tmpfile_name, recv_reload_response)
         else:
-            reload_response = cli.service.reload_on_worker(view.file_name(), tmpfile_name)
+            reload_response = service.reload_on_worker(view.file_name(), tmpfile_name)
             recv_reload_response(reload_response)
 
 def reload_required(view):
@@ -282,10 +302,13 @@ def send_replace_changes_for_regions(view, regions, insert_string):
     """
     if not is_typescript(view):
         return
+    service = cli.get_service()
+    if not service:
+        return None
     for region in regions:
         location = get_location_from_position(view, region.begin())
         end_location = get_location_from_position(view, region.end())
-        cli.service.change(view.file_name(), location, end_location, view.substr(sublime.Region(0, view.size())))
+        service.change(view.file_name(), location, end_location, view.substr(sublime.Region(0, view.size())))
 
 
 def apply_edit(text, view, start_line, start_offset, end_line, end_offset, new_text=""):
@@ -326,7 +349,10 @@ def format_range(text, view, begin, end):
         print("To run this command, please first assign a file name to the view")
         return
     check_update_view(view)
-    format_resp = cli.service.format(
+    service = cli.get_service()
+    if not service:
+        return None
+    format_resp = service.format(
         view.file_name(),
         get_location_from_position(view, begin),
         get_location_from_position(view, end)

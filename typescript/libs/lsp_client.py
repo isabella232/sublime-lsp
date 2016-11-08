@@ -1,3 +1,4 @@
+import copy
 import os
 import subprocess
 import threading
@@ -21,9 +22,12 @@ else:
 class LspCommClient(node_client.CommClient):
     __CONTENT_LENGTH_HEADER = b"Content-Length: "
 
-    def __init__(self, script_path):
+    def __init__(self, binary_path, args, env, root_path):
         self.server_proc = None
-        self.script_path = script_path
+        self.args = copy.deepcopy(args)
+        self.args.insert(0, binary_path)
+        self.root_path = root_path
+        self.env = copy.deepcopy(env)
 
         # create event handler maps
         self.event_handlers = dict()
@@ -236,12 +240,12 @@ class LspCommClient(node_client.CommClient):
 
 class ServerClient(LspCommClient):
 
-    def __init__(self, script_path):
+    def __init__(self, binary_path, args, env, root_path):
         """
         Starts a node client (if not already started) and communicate with it.
         The script file to run is passed to the constructor.
         """
-        super(ServerClient, self).__init__(script_path)
+        super(ServerClient, self).__init__(binary_path, args, env, root_path)
 
         # start node process
         pref_settings = sublime.load_settings('Preferences.sublime-settings')
@@ -273,16 +277,16 @@ class ServerClient(LspCommClient):
                     # so only use it if on Windows
                     si = subprocess.STARTUPINFO()
                     si.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
-                    self.server_proc = subprocess.Popen(["/Users/mattfs/gopath/bin/langserver-go"],
-                                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=si)
+                    self.server_proc = subprocess.Popen(self.args,
+                                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=si, cwd=self.root_path, env=self.env)
                 else:
-                    log.debug("opening " + node_path + " " + script_path)
-                    env = os.environ
-                    env["GOPATH"] = "/Users/mattfs/gopath"
-                    env["PATH"] = env["PATH"] + ":/usr/local/go/bin"
-                    self.server_proc = subprocess.Popen(["/Users/mattfs/gopath/bin/langserver-go"],
-                                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=env)
-            except:
+                    log.debug("opening " + node_path + " " + binary_path)
+                    print(self.env)
+                    print(self.root_path)
+                    self.server_proc = subprocess.Popen(self.args,
+                                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=self.root_path, env=self.env)
+            except Exception as err:
+                print(err)
                 self.server_proc = None
         # start reader thread
         if self.server_proc and (not self.server_proc.poll()):
@@ -292,7 +296,7 @@ class ServerClient(LspCommClient):
                 self.server_proc.stdout, self.msgq, self.eventq, self.asyncReq, self.reqType, self.server_proc, self.event_handlers))
             readerThread.daemon = True
             readerThread.start()
-        self.sendCmdAsync(lsp_helpers.init_message("file:///Users/mattfs/gopath/src/sourcegraph.com/sourcegraph/sourcegraph", self.server_proc.pid), None, 0)
+        self.sendCmdAsync(lsp_helpers.init_message("file://" + self.root_path, self.server_proc.pid), None, 0)
 
     @staticmethod
     def __reader(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers):
@@ -306,8 +310,8 @@ class ServerClient(LspCommClient):
 class WorkerClient(LspCommClient):
     stop_worker = False
     
-    def __init__(self, script_path):
-        super(WorkerClient, self).__init__(script_path)
+    def __init__(self, binary_path, args, env, root_path):
+        super(WorkerClient, self).__init__(binary_path, args, env, root_path)
 
     def start(self):
         WorkerClient.stop_worker = False
@@ -317,11 +321,11 @@ class WorkerClient(LspCommClient):
             si = subprocess.STARTUPINFO()
             si.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
             self.server_proc = subprocess.Popen(
-                [node_path, self.script_path], stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=si
+                self.args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=si, cwd=self.root_path, env=self.env
             )
         else:
             self.server_proc = subprocess.Popen(
-                [node_path, self.script_path], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                self.args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=self.root_path, env=self.env)
 
         # start reader thread
         if self.server_proc and (not self.server_proc.poll()):

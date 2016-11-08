@@ -27,9 +27,9 @@ class PopupManager():
     html_template = ''
     font_size = _POPUP_DEFAULT_FONT_SIZE
 
-    def __init__(self, proxy):
+    def __init__(self):
         self.scheduler = work_scheduler()
-        self.proxy = proxy
+        # self.proxy = proxy
 
         # Maintains the latest set of signature data and rendering info
         self.current_view = None
@@ -66,7 +66,10 @@ class PopupManager():
                     reload_buffer(view)
             
             # Send a signagure_help request to server
-            self.proxy.async_signature_help(filename, point, '', on_done)
+            service = cli.get_service()
+            if not service:
+                return
+            service.async_signature_help(filename, point, '', on_done)
 
         # Schedule the request
         self.scheduler.queue_request(get_signature_data,
@@ -302,7 +305,7 @@ def get_popup_manager():
 
             _set_up_popup_style()
             PopupManager.html_template = Template(popup_text)
-            _popup_manager = PopupManager(cli.service)
+            _popup_manager = PopupManager()
     else:
         _popup_manager = None
 

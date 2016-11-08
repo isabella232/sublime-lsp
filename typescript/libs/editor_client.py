@@ -30,8 +30,8 @@ class EditorClient:
         self.seq_to_tempfile_name = {}
         self.available_tempfile_list = []
         self.tmpseq = 0
-        self.node_client = None
-        self.worker_client = None
+        # self.node_client = None
+        # self.worker_client = None
         self.service = None
         self.initialized = False
 
@@ -46,7 +46,7 @@ class EditorClient:
     def go_specific_hack(self, env):
         gopaths = env["GOPATH"].split(os.pathsep)
         for gopath in gopaths:
-            env["PATH"] = gopath+os.pathsep+env["PATH"]
+            env["PATH"] = os.path.join(gopath, "bin")+os.pathsep+env["PATH"]
 
     def initialize_client_manager(self, settings):
         # initialize client manager
@@ -67,6 +67,26 @@ class EditorClient:
                     client["binary"],
                     client.get("args"), 
                     env)
+
+    def get_root_path(self):
+        # hack, because the Sublime API is broken and .get('folder') returns the
+        # top folder always
+        file_path = sublime.active_window().extract_variables().get('file_path')
+        if not file_path:
+            return None
+
+        found_folder = sublime.active_window().extract_variables().get('folder')
+        chars_matching = -1
+        for folder in sublime.active_window().folders():
+            if file_path.startswith(folder) and len(folder) > chars_matching:
+                found_folder = folder
+                chars_matching = len(found_folder)
+        return found_folder
+
+    def get_service(self):
+        file_ext = sublime.active_window().extract_variables().get('file_extension')
+        root_path = self.get_root_path()
+        return self.client_manager.get_client(file_ext, root_path)
 
     def initialize(self):
         """
@@ -90,9 +110,10 @@ class EditorClient:
         print("Path of tsserver.js: " + proc_file)
         print("Path of tsc.js: " + get_tsc_path())
 
-        self.node_client = ServerClient(proc_file)
-        self.worker_client = WorkerClient(proc_file)
-        self.service = ServiceProxy(self.worker_client, self.node_client)
+        # self.node_client = ServerClient(proc_file)
+        # self.worker_client = WorkerClient(proc_file)
+        # self.service = ServiceProxy(self.worker_client, self.node_client)
+        self.service = self.client_manager.get_client("go", "/Users/mattfs/gopath/src/sourcegraph.com/sourcegraph/sourcegraph")
 
         # load formatting settings and set callbacks for setting changes
         for setting_name in [
@@ -126,7 +147,7 @@ class EditorClient:
             "indentSize": self.indent_size,
             "convertTabsToSpaces": self.translate_tab_to_spaces
         }
-        self.service.configure(host_info, None, format_options)
+        self.get_service().configure(host_info, None, format_options)
 
     # ref info is for Find References view
     # TODO: generalize this so that there can be multiple
