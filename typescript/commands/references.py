@@ -119,7 +119,7 @@ class TypescriptPopulateRefs(sublime_plugin.TextCommand):
         args = json_helpers.decode(argsJson)
         file_name = args["filename"]
         line = args["line"]
-        ref_display_string = args["referencesRespBody"]["symbolDisplayString"]
+        ref_display_string = args["referencesRespBody"]["symbolName"]
         ref_id = args["referencesRespBody"]["symbolName"]
         refs = args["referencesRespBody"]["refs"]
 
