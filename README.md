@@ -2,7 +2,7 @@
 
 A [Language Server Protocol](https://github.com/Microsoft/language-server-protocol) connector for Sublime Text 3.
 
-*The project is in beta mode. Feedback or issue? Please email us at support@sourcegraph.com or [file an issue.](https://github.com/sourcegraph/lsp-sublime/issues)*
+*The project is in beta mode. Feedback or issue? Please email us at support@sourcegraph.com or [file an issue.](https://github.com/sourcegraph/sublime-lsp/issues)*
 
 ## Overview
 
@@ -15,10 +15,10 @@ This plugin borrows heavily from the popular [Microsoft TypeScript Sublime Plugi
 ## Operations supported
 
 This connector currently supports:
-* [hover](https://github.com/sourcegraph/lsp-sublime#hover) operations (Sublime build >=3124)
-* [goto definition](https://github.com/sourcegraph/lsp-sublime#go-to-definition)
-* [find all references](https://github.com/sourcegraph/lsp-sublime#find-all-references)
-* [error highlighting](https://github.com/sourcegraph/lsp-sublime#diagnostics)
+* [hover](https://github.com/sourcegraph/sublime-lsp#hover) operations (Sublime build >=3124)
+* [goto definition](https://github.com/sourcegraph/sublime-lsp#go-to-definition)
+* [find all references](https://github.com/sourcegraph/sublime-lsp#find-all-references)
+* [error highlighting](https://github.com/sourcegraph/sublime-lsp#diagnostics)
 
 Autocomplete, semantic symbol-based search, formatting utilities will soon be supported.
 
@@ -32,18 +32,18 @@ This plugin has been developed for use with the [go-langserver](https://github.c
 
 First, install the `langserver-go` binary by running `go get -u github.com/sourcegraph/go-langserver/langserver/cmd/langserver-go`. The `langserver-go` binary should now be available via your command line.
 
-Next, install the `lsp-sublime` connector for Sublime Text by cloning `lsp-sublime` repository into your Sublime Text 3 Packages folder:
+Next, install the `sublime-lsp` connector for Sublime Text by cloning `sublime-lsp` repository into your Sublime Text 3 Packages folder:
 
 macOS:
 
 ```shell
-git clone git@github.com:sourcegraph/lsp-sublime.git ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/lsp-sublime
+git clone git@github.com:sourcegraph/sublime-lsp.git ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/sublime-lsp
 ```
 
 Linux:
 
 ```shell
-git clone git@github.com:sourcegraph/lsp-sublime.git ~/.config/sublime-text-3/Packages/lsp-sublime
+git clone git@github.com:sourcegraph/sublime-lsp.git ~/.config/sublime-text-3/Packages/sublime-lsp
 ```
 
 Next, configure the LSP connector for the `langserver-go` binary. To change your Sourcegraph settings, open `SublimeLsp.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Sublime Lsp Connector > Settings - User`.
@@ -67,25 +67,25 @@ Next, configure the LSP connector for the `langserver-go` binary. To change your
 }
 ```
 
-Finally, restart Sublime Text to start using the plugin. You may want to [disable Sublime's native tooltips](https://github.com/sourcegraph/lsp-sublime#remove-sublime-text-3-tooltips-and-goto-menu-items), as they are duplicative and interfere with this connector's tooltips.  
+Finally, restart Sublime Text to start using the plugin. You may want to [disable Sublime's native tooltips](https://github.com/sourcegraph/sublime-lsp#remove-sublime-text-3-tooltips-and-goto-menu-items), as they are duplicative and interfere with this connector's tooltips.  
 
 ## Usage
 
 ### Hover
 
-As you navigate through Go files, when your cursor is on a symbol, you should see hover tooltips. You may have to [disable Sublime's native tooltips](https://github.com/sourcegraph/lsp-sublime#remove-sublime-text-3-tooltips-and-goto-menu-items).
+As you navigate through Go files, when your cursor is on a symbol, you should see hover tooltips. You may have to [disable Sublime's native tooltips](https://github.com/sourcegraph/sublime-lsp#remove-sublime-text-3-tooltips-and-goto-menu-items).
 
 ![hover tooltips](screenshots/hover.gif)
 
 ### Goto definition
 
-[Execute](https://github.com/sourcegraph/lsp-sublime#open-the-command-window) the `Lsp: Goto definition` command, and Sublime will jump to the definition of a symbol in your workspace.
+[Execute](https://github.com/sourcegraph/sublime-lsp#open-the-command-window) the `Lsp: Goto definition` command, and Sublime will jump to the definition of a symbol in your workspace.
 
 ![goto def](screenshots/def.gif)
 
 ### Find all references
 
-[Execute](https://github.com/sourcegraph/lsp-sublime#open-the-command-window) the `Lsp: Find all references` command, and Sublime will open up a results pane with semantic references to the symbols within your project.
+[Execute](https://github.com/sourcegraph/sublime-lsp#open-the-command-window) the `Lsp: Find all references` command, and Sublime will open up a results pane with semantic references to the symbols within your project.
 
 ![find all references](screenshots/refs.png)
 
