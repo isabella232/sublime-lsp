@@ -1,6 +1,8 @@
 from . import json_helpers
 import sublime
 import json
+import sys
+
 if int(sublime.version()) < 3000:
     import urllib
     from urlparse import urljoin
@@ -135,8 +137,10 @@ def filename_to_uri(filename):
     return urljoin('file:', urllib.pathname2url(filename))
 
 def convert_lsp_to_filename(uri):
-    return uri[len("file://"):]
-
+    uri = uri[len("file://"):]
+    if sys.platform == "win32":
+        uri = uri.lstrip("/")
+    return uri
 
 def format_request(request):
     """Converts the request into json and adds the Content-Length header"""

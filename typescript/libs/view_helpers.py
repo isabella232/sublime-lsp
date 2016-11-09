@@ -97,7 +97,7 @@ def active_window():
 
 
 def is_supported_ext(view):
-    """Test if the outer syntactic scope is 'source.ts' or 'source.tsx' """
+    """Test if view's file format is supported """
     if not view.file_name():
         return False
 
@@ -105,7 +105,6 @@ def is_supported_ext(view):
         location = view.sel()[0].begin()
     except:
         return False
-
     for selector in cli.client_manager.extension_mapping.keys():
         if view.match_selector(location, "source.%s" % selector):
             return True

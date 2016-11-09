@@ -88,7 +88,26 @@ Finally, restart Sublime Text to start using the plugin. You may want to [disabl
 
 ### TypeScript/JavaScript installation
 
-Install the TypeScript/JavaScript LSP server the following way:
+First, you need to add TypeScript Sublime support the following way:
+
+```shell
+git clone git clone https://github.com/Microsoft/TypeScript-TmLanguage ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/TypeScript-TmLanguage
+```
+
+Linux:
+
+```shell
+git clone https://github.com/Microsoft/TypeScript-TmLanguage ~/.config/sublime-text-3/Packages/TypeScript-TmLanguage
+```
+
+Windows:
+
+```bat
+cd "%APPDATA%\Sublime Text 3\Packages"
+git clone https://github.com/Microsoft/TypeScript-TmLanguage
+```
+
+Then install the TypeScript/JavaScript LSP server the following way:
 
 ```shell
 export JSTS_DIR=...
