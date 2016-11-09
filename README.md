@@ -129,27 +129,11 @@ Any search items starting with `Language Server` is provided by the LSP connecto
 
 ### Add right click menu options
 
-TBD
+By default, the sublime-lsp connector includes two options to your right click menu. `Find local references` and `Explore code at cursor.`
 
 ### Change default keybindings
 
-To change the default keybindings, navigate to `Sublime Text > Preferences > Keybindings`, and add the following:
-
-```
-[
-    // Defaults listed below. For macOS users, use command key instead of ctrl.
-    ...
-    {
-		"keys": ["ctrl+.","ctrl+h"],
-		"command": "goto_provider"
-	},
-	{
-		"keys": ["ctrl+.","ctrl+j"],
-		"command": "refs_provider"
-	}
-    ...
-]
-``` 
+TBD
 
 ## Support
 

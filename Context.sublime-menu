@@ -1,4 +1,4 @@
 [
-  { "command": "browse_code", "caption": "Explore code online" },
+  { "command": "browse_code", "caption": "Explore code at cursor" },
   { "command": "typescript_find_references", "caption": "Find local references" }
 ]

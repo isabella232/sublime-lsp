@@ -1,5 +1,6 @@
 [
  { "caption" : "Langserver: GoTo Definition", "command": "typescript_go_to_definition" },
+ { "caption" : "Langserver: Explore Code", "command": "browse_code" },
  { "caption" : "Langserver: Quick Info Documentation", "command": "typescript_quick_info_doc" },
  { "caption" : "Langserver: Overloads Panel", "command": "typescript_signature_panel" },
  { "caption" : "Langserver: Save Tmp", "command": "typescript_save" },
