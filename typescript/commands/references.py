@@ -1,3 +1,5 @@
+import threading
+
 import sublime_plugin
 
 from ..libs import *
@@ -13,10 +15,9 @@ class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
             pos = self.view.sel()[0].begin()
             cursor = self.view.rowcol(pos)
             line = str(cursor[0] + 1)
-            args = {"line": line, "filename": self.view.file_name(), "referencesRespBody": references_resp["body"]}
-            args_json_str = json_helpers.encode(args)
-            ref_view = get_ref_view()
-            ref_view.run_command('typescript_populate_refs', {"argsJson": args_json_str})
+            t = threading.Thread(target=TypescriptFindReferencesCommand.__decorate, args=(self.view.file_name(), line, references_resp["body"]))
+            t.daemon = True
+            t.start()
         self.view.erase_status("typescript_populate_refs")
 
     def run(self, text):
@@ -35,6 +36,23 @@ class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
             False
         # TODO(uforic) hide if text isn't clicked on, imitating Sublime Go to def behavior
         return True
+
+    @staticmethod
+    def __decorate(file_name, line, references):
+        helper = RefsHelper()
+        symbol = None
+        for i, entry in enumerate(references["refs"]):
+            line = helper.lineText(entry["file"], entry["start"]["line"] - 1)
+            if symbol is None and entry["start"]["line"] == entry["end"]["line"]:
+                symbol = line[entry["start"]["offset"]-1:entry["end"]["offset"]-1]
+            references["refs"][i]["lineText"] = line
+        if symbol is None:
+            symbol = "?"
+        references["symbolName"] = symbol
+        args = {"line": line, "filename": file_name, "referencesRespBody": references}
+        args_json_str = json_helpers.encode(args)
+        ref_view = get_ref_view()
+        ref_view.run_command('typescript_populate_refs', {"argsJson": args_json_str})
 
 
 class TypescriptGoToRefCommand(sublime_plugin.TextCommand):
@@ -173,3 +191,42 @@ class TypescriptPopulateRefs(sublime_plugin.TextCommand):
         # serialize the reference info into the settings
         self.view.settings().set('refinfo', ref_info.as_value())
         self.view.set_read_only(True)
+
+class RefsHelper:
+
+    __lines = {}
+    __content = {}
+
+    def lineText(self, fileName, line):
+        """ returns text of the given line in the given file """
+        lines = self.__table(fileName)
+        l = len(lines)
+        if l < line:
+            return ''
+        content = self.__content[fileName]
+        start = lines[line]
+        if line < l - 1:
+            end = lines[line + 1]
+        else:
+            end = len(content)
+        return content[start:end].rstrip()
+
+    def __table(self, fileName):
+        """ returns line table for a given filename, computes if needed """
+        lines = self.__lines.get(fileName)
+        if lines is not None:
+            return lines
+        f = open(fileName)
+        lines = []
+        offset = 0
+        content = ''
+        try:
+            for line in f:
+                lines.append(offset)
+                offset += len(line)
+                content += line
+        finally:
+            f.close()
+            self.__lines[fileName] = lines
+            self.__content[fileName] = content
+        return lines

@@ -223,24 +223,15 @@ def convert_response(request_type, response):
                 "refs": []
         }
 
-        helper = RefsHelper()
-        symbol = None
         for entry in response["result"]:
             file = convert_lsp_to_filename(entry["uri"])
-            line = helper.lineText(file, entry["range"]["start"]["line"])
-            if symbol is None and entry["range"]["start"]["line"] == entry["range"]["end"]["line"]:
-                symbol = line[entry["range"]["start"]["character"]:entry["range"]["end"]["character"]]
             referencesRespBody["refs"].append({
                 "end": convert_position_from_lsp(entry["range"]["end"]),
                 "start": convert_position_from_lsp(entry["range"]["start"]),
                 "isDefinition": False,
                 "isWriteAccess": True,
-                "file": file,
-                "lineText": line
+                "file": file
             })
-        if symbol is None:
-            symbol = "?"
-        referencesRespBody["symbolName"] = symbol
         return {
             "seq": 0,
             "request_seq": response["id"],
@@ -259,41 +250,3 @@ def convert_response(request_type, response):
 #         ref_id = args["referencesRespBody"]["symbolName"]
 #         refs = args["referencesRespBody"]["refs"]
 
-class RefsHelper:
-
-    __lines = {}
-    __content = {}
-
-    def lineText(self, fileName, line):
-        """ returns text of the given line in the given file """
-        lines = self.__table(fileName)
-        l = len(lines)
-        if l < line:
-            return ''
-        content = self.__content[fileName]
-        start = lines[line]
-        if line < l - 1:
-            end = lines[line + 1]
-        else:
-            end = len(content)
-        return content[start:end].rstrip()
-
-    def __table(self, fileName):
-        """ returns line table for a given filename, computes if needed """
-        lines = self.__lines.get(fileName)
-        if lines is not None:
-            return lines
-        f = open(fileName)
-        lines = []
-        offset = 0
-        content = ''
-        try:
-            for line in f:
-                lines.append(offset)
-                offset += len(line)
-                content += line
-        finally:
-            f.close()
-            self.__lines[fileName] = lines
-            self.__content[fileName] = content
-        return lines
