@@ -301,11 +301,11 @@ class ServerClient(LspCommClient):
                 si = subprocess.STARTUPINFO()
                 si.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
                 self.server_proc = subprocess.Popen(self.args,
-                                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=si, cwd=self.root_path, env=self.env)
+                                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si, cwd=self.root_path, env=self.env)
             else:
                 log.debug("opening " + binary_path)
                 self.server_proc = subprocess.Popen(self.args,
-                                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=self.root_path, env=self.env)
+                                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.root_path, env=self.env)
         except Exception as err:
             print(err)
             self.server_proc = None
@@ -317,6 +317,12 @@ class ServerClient(LspCommClient):
                 self.server_proc.stdout, self.msgq, self.eventq, self.asyncReq, self.reqType, self.server_proc, self.event_handlers))
             readerThread.daemon = True
             readerThread.start()
+            log.debug("starting logger thread")
+            loggerThread = threading.Thread(target=ServerClient.__logger, args=(
+                self.server_proc.stderr, 1))
+            loggerThread.daemon = True
+            loggerThread.start()
+
         self.postCmd(lsp_helpers.init_message(lsp_helpers.filename_to_uri(self.root_path), self.server_proc.pid))
 
     @staticmethod
@@ -326,6 +332,12 @@ class ServerClient(LspCommClient):
             if LspCommClient.read_msg(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers):
                 log.debug("server exited")
                 return
+
+    @staticmethod
+    def __logger(stream, bar):
+        """ Dumps server's stderr to stderr """
+        for line in iter(stream.readline, ""):
+            print(">" + line.decode("utf-8").rstrip(), file=sys.stderr)
 
 class WorkerClient(LspCommClient):
     stop_worker = False
