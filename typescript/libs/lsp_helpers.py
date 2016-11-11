@@ -156,24 +156,21 @@ def convert_other(msg):
         return None
     params = msg["params"]
     if params.get("diagnostics"):
-        diag = params.get("diagnostics")[0]
+        diags = []
+        for diag in params.get("diagnostics"):
+            diags.append(
+            {
+                "text": diag["message"],
+                "start": convert_position_from_lsp(diag["range"]["start"]),
+                "end": convert_position_from_lsp(diag["range"]["end"]),
+            })
         return {
             "event": "syntaxDiag",
             "type": "event",
             "seq": 0,
             "body": {
                 "file": convert_lsp_to_filename(params["uri"]),
-                "diagnostics": [{
-                    "text": diag["message"],
-                    "start": {
-                        "line": diag["range"]["start"]["line"]+1,
-                        "offset": diag["range"]["start"]["character"]+1,
-                    },
-                    "end": {
-                        "line": diag["range"]["end"]["line"]+1,
-                        "offset": diag["range"]["end"]["character"]+2,
-                    },
-                }]
+                "diagnostics": diags
             }
         }
     return None

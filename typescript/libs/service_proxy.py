@@ -41,10 +41,10 @@ class ServiceProxy:
     def change(self, path, begin_location=Location(1, 1), end_location=Location(1, 1), insertString=""):
         args = {
             "file": path,
-            "line": begin_location.line,
-            "offset": begin_location.offset,
-            "endLine": end_location.line,
-            "endOffset": end_location.offset,
+            # "line": begin_location.line,
+            # "offset": begin_location.offset,
+            # "endLine": end_location.line,
+            # "endOffset": end_location.offset,
             "insertString": insertString
         }
         req_dict = self.create_req_dict("change", args)

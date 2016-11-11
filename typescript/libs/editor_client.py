@@ -21,6 +21,22 @@ class ClientFileInfo:
         self.rename_on_load = None
 
 
+def get_root_path():
+        # hack, because the Sublime API is broken and .get('folder') returns the
+        # top folder always
+        file_path = sublime.active_window().extract_variables().get('file_path')
+        if not file_path:
+            return None
+
+        found_folder = sublime.active_window().extract_variables().get('folder')
+        chars_matching = -1
+        for folder in sublime.active_window().folders():
+            if file_path.startswith(folder) and len(folder) > chars_matching:
+                found_folder = folder
+                chars_matching = len(found_folder)
+        return found_folder
+
+
 class EditorClient:
     """A singleton class holding information for the entire application that must be accessible globally"""
 
@@ -67,24 +83,10 @@ class EditorClient:
                     client.get("args"), 
                     env)
 
-    def get_root_path(self):
-        # hack, because the Sublime API is broken and .get('folder') returns the
-        # top folder always
-        file_path = sublime.active_window().extract_variables().get('file_path')
-        if not file_path:
-            return None
-
-        found_folder = sublime.active_window().extract_variables().get('folder')
-        chars_matching = -1
-        for folder in sublime.active_window().folders():
-            if file_path.startswith(folder) and len(folder) > chars_matching:
-                found_folder = folder
-                chars_matching = len(found_folder)
-        return found_folder
 
     def get_service(self):
         file_ext = sublime.active_window().extract_variables().get('file_extension')
-        root_path = self.get_root_path()
+        root_path = get_root_path()
         return self.client_manager.get_client(file_ext, root_path)
 
     def initialize(self):

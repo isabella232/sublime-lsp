@@ -41,7 +41,7 @@ def get_info(view, open_if_not_cached=True):
     """Find the file info on the server that matches the given view"""
     if not get_language_service_enabled():
         return
-    
+
     if not cli.initialized:
         cli.initialize()
 
@@ -306,10 +306,12 @@ def send_replace_changes_for_regions(view, regions, insert_string):
     service = cli.get_service()
     if not service:
         return None
-    for region in regions:
-        location = get_location_from_position(view, region.begin())
-        end_location = get_location_from_position(view, region.end())
-        service.change(view.file_name(), location, end_location, view.substr(sublime.Region(0, view.size())))
+    service.change(view.file_name(), None, None, view.substr(sublime.Region(0, view.size())))
+    # TODO: In partial update world, bottom code should be used
+    # for region in regions:
+    #     location = get_location_from_position(view, region.begin())
+    #     end_location = get_location_from_position(view, region.end())
+    #     service.change(view.file_name(), location, end_location, view.substr(sublime.Region(0, view.size())))
 
 
 def apply_edit(text, view, start_line, start_offset, end_line, end_offset, new_text=""):

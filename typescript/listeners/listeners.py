@@ -82,7 +82,7 @@ class TypeScriptEventListener(sublime_plugin.EventListener):
                     prev_cursor = info.prev_sel[0].begin()
                     cursor = view.sel()[0].begin()
                     key = view.substr(sublime.Region(prev_cursor, cursor))
-                    send_replace_changes_for_regions(view, static_regions_to_regions(info.prev_sel), key)
+                    # send_replace_changes_for_regions(view, static_regions_to_regions(info.prev_sel), key)
                     # mark change as handled so that on_post_text_command doesn't try to handle it
                     info.change_sent = True
                 else:
@@ -101,6 +101,7 @@ class TypeScriptEventListener(sublime_plugin.EventListener):
 
     def post_on_modified(self, view):
         log.debug("post_on_modified")
+        send_replace_changes_for_regions(view, None, None)
         EventHub.run_listeners("post_on_modified", view)
 
     def on_selection_modified(self, view):
@@ -135,7 +136,6 @@ class TypeScriptEventListener(sublime_plugin.EventListener):
         # save the current cursor position so that we can see (in
         # on_modified) what was inserted
         info.prev_sel = regions_to_static_regions(view.sel())
-
         EventHub.run_listeners("on_selection_modified_with_info", view, info)
 
     def on_load(self, view):
@@ -145,7 +145,11 @@ class TypeScriptEventListener(sublime_plugin.EventListener):
     def on_window_command(self, window, command_name, args):
         log.debug("on_window_command")
 
-        if command_name == "hide_panel" and cli.worker_client.started():
+        service = cli.get_service()
+        if not service:
+            return
+
+        if command_name == "hide_panel" and service.__worker_comm.started():
             cli.worker_client.stop()
 
         elif command_name == "exit":
@@ -179,19 +183,19 @@ class TypeScriptEventListener(sublime_plugin.EventListener):
         log.debug("on_text_command_with_info")
         info.change_sent = True
         info.pre_change_sent = True
-        if command_name == "left_delete":
+        # if command_name == "left_delete":
             # backspace
-            send_replace_changes_for_regions(view, left_expand_empty_region(view.sel()), "")
-        elif command_name == "right_delete":
+            # send_replace_changes_for_regions(view, left_expand_empty_region(view.sel()), "")
+        # elif command_name == "right_delete":
             # delete
-            send_replace_changes_for_regions(view, right_expand_empty_region(view.sel()), "")
-        else:
+            # send_replace_changes_for_regions(view, right_expand_empty_region(view.sel()), "")
+        # else:
             # notify on_modified and on_post_text_command events that
             # nothing was handled. There are multiple flags because Sublime
             # does not always call all three events.
-            info.pre_change_sent = False
-            info.change_sent = False
-            info.modified = False
+        info.pre_change_sent = False
+        info.change_sent = False
+        info.modified = False
 
         EventHub.run_listeners("on_text_command_with_info", view, command_name, args, info)
 
