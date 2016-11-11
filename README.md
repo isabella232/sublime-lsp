@@ -58,7 +58,7 @@ Install the `langserver-go` binary by running `go get -u github.com/sourcegraph/
 Next, configure the LSP connector for the `langserver-go` binary. To change your Sourcegraph settings, open `SublimeLsp.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Sublime Lsp Connector > Settings - User`.
 Find there `clients` section, if it does not exist, create it the following way
 
-```json
+```
 {
 ...
     "clients": [
@@ -69,7 +69,7 @@ Find there `clients` section, if it does not exist, create it the following way
 
 Then, add the following client descriptor into `clients` section
 
-```json
+```
 {
         {
             "binary": "langserver-go",
@@ -122,7 +122,7 @@ Please make sure that `$JSTS_DIR/bin` is in `$PATH`
 Next, register TypeScript/JavaScript LSP client. To change your Sourcegraph settings, open `SublimeLsp.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Sublime Lsp Connector > Settings - User`.
 Find there `clients` section, if it does not exist, create it the following way
 
-```json
+```
 {
 ...
     "clients": [
@@ -133,7 +133,7 @@ Find there `clients` section, if it does not exist, create it the following way
 
 Then, add the following client descriptor into `clients` section
 
-```json
+```
 {
         {
             "binary": "javascript-typescript-sublime",
