@@ -41,7 +41,6 @@ class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
 
     @staticmethod
     def __decorate(file_name, line, references):
-        helper = RefsHelper()
         symbol = None
         file_entries = defaultdict(list)
         for i, entry in enumerate(references["refs"]):
