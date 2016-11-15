@@ -43,11 +43,14 @@ class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
     def __decorate(file_name, line, references):
         helper = RefsHelper()
         symbol = None
+        file_entries = defaultdict(list)
         for i, entry in enumerate(references["refs"]):
-            line = helper.lineText(entry["file"], entry["start"]["line"] - 1)
-            if symbol is None and entry["start"]["line"] == entry["end"]["line"]:
-                symbol = line[entry["start"]["offset"]-1:entry["end"]["offset"]-1]
-            references["refs"][i]["lineText"] = line
+            file_entries[entry["file"]].append(entry)
+        for file_name in file_entries:
+            get_lines_from_file(file_name, file_entries[file_name])
+            for entry in file_entries[file_name]:
+                if symbol is None and entry["start"]["line"] == entry["end"]["line"]:
+                    symbol = entry["lineText"][entry["start"]["offset"]-1:entry["end"]["offset"]-1]
         if symbol is None:
             symbol = "?"
         references["symbolName"] = symbol
@@ -194,45 +197,23 @@ class TypescriptPopulateRefs(sublime_plugin.TextCommand):
         self.view.settings().set('refinfo', ref_info.as_value())
         self.view.set_read_only(True)
 
-class RefsHelper:
 
-    __lines = {}
-    __content = {}
+def get_lines_from_file(fileName, entries):
+    line_nos = defaultdict(list)
+    for entry in entries:
+        line_nos[entry["start"]["line"] - 1].append(entry)
+    f = None
+    try:
+        f = open(fileName, encoding='utf-8', errors='ignore')
+        count = 0
+        for line in f:
+            if line_nos.get(count):
+                for entry in line_nos.get(count):
+                    entry["lineText"] = line.rstrip()
+            count = count + 1
 
-    def lineText(self, fileName, line):
-        """ returns text of the given line in the given file """
-        lines = self.__table(fileName)
-        l = len(lines)
-        if l <= line:
-            return 'Error fetching preview from %s' % (fileName)
-        content = self.__content[fileName]
-        start = lines[line]
-        if line < l - 1:
-            end = lines[line + 1]
-        else:
-            end = len(content)
-        return content[start:end].rstrip()
-
-    def __table(self, fileName):
-        """ returns line table for a given filename, computes if needed """
-        lines = self.__lines.get(fileName)
-        if lines is not None:
-            return lines
-        lines = []
-        offset = 0
-        content = ''
-        f = None
-        try:
-            f = open(fileName, encoding='utf-8', errors='ignore')
-            for line in f:
-                lines.append(offset)
-                offset += len(line)
-                content += line
-        except Exception as e:
-            log.exception('Error fetching preview from %s' % (fileName))
-        finally:
-            if f is not None:
-                f.close()
-            self.__lines[fileName] = lines
-            self.__content[fileName] = content
-        return lines
+    except Exception as e:
+        log.exception('Error fetching preview from %s' % (fileName))
+    finally:
+        if f is not None:
+            f.close()
