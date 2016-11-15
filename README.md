@@ -123,7 +123,8 @@ Add the following client descriptor into `clients` section
         "clients": [
             {
                 "binary": "javascript-typescript-stdio",
-                "file_exts": ["ts", "tsx", "js", "jsx"]
+                "file_exts": ["ts", "tsx", "js", "jsx"],
+                "path_additions": ["/path/to/jsts/bin", "/path/to/node/binary/usually/usr/local/bin"],
             }
     ]
     ...
