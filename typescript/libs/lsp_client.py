@@ -2,6 +2,7 @@ import logging
 import copy
 import os
 import subprocess
+import sys
 import threading
 import time
 import json
@@ -13,6 +14,7 @@ from . import json_helpers
 from . import global_vars
 from . import lsp_helpers
 from . import node_client
+from .os_helpers import which
 
 # queue module name changed from Python 2 to 3
 if int(sublime.version()) < 3000:
@@ -26,7 +28,10 @@ class LspCommClient(node_client.CommClient):
     def __init__(self, binary_path, args, env, root_path):
         self.server_proc = None
         self.args = copy.deepcopy(args)
-        self.args.insert(0, binary_path)
+        program = which(binary_path)
+        if program is None:
+            program = binary_path
+        self.args.insert(0, program)
         self.root_path = root_path
         self.env = copy.deepcopy(env)
 
@@ -217,23 +222,6 @@ class LspCommClient(node_client.CommClient):
     def is_executable(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
-    @staticmethod
-    def which(program):
-        fpath, fname = os.path.split(program)
-        if fpath:
-            if LspCommClient.is_executable(program):
-                return program
-        else:
-            # /usr/local/bin is not on mac default path
-            # but is where node is typically installed on mac
-            path_list = os.path.expandvars(os.environ["PATH"]) + os.pathsep + "/usr/local/bin" + os.pathsep + os.path.expandvars("$NVM_BIN")
-            for path in path_list.split(os.pathsep):
-                path = path.strip('"')
-                programPath = os.path.join(path, program)
-                if LspCommClient.is_executable(programPath):
-                    return programPath
-        return None
-
 
 class ServerClient(LspCommClient):
 
@@ -243,7 +231,7 @@ class ServerClient(LspCommClient):
         The script file to run is passed to the constructor.
         """
         super(ServerClient, self).__init__(binary_path, args, env, root_path)
-        print("Trying to spawn executable from: " + binary_path)
+        log.debug('Trying to spawn {0}'.format(' '.join(self.args)))
         try:
             if os.name == "nt":
                 # linux subprocess module does not have STARTUPINFO
@@ -251,23 +239,29 @@ class ServerClient(LspCommClient):
                 si = subprocess.STARTUPINFO()
                 si.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
                 self.server_proc = subprocess.Popen(self.args,
-                                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=si, cwd=self.root_path, env=self.env)
+                                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si, cwd=self.root_path, env=self.env)
             else:
                 log.debug("opening " + binary_path)
                 self.server_proc = subprocess.Popen(self.args,
-                                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=self.root_path, env=self.env)
+                                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.root_path, env=self.env)
         except Exception as err:
             print(err)
             self.server_proc = None
         # start reader thread
-        if self.server_proc and (not self.server_proc.poll()):
-            log.debug("server proc " + str(self.server_proc))
+        if self.server_proc and (self.server_proc.poll() is None):
+            log.debug("server process " + str(self.server_proc.pid))
             log.debug("starting reader thread")
             readerThread = threading.Thread(target=ServerClient.__reader, args=(
                 self.server_proc.stdout, self.msgq, self.eventq, self.asyncReq, self.reqType, self.server_proc, self.event_handlers))
             readerThread.daemon = True
             readerThread.start()
-        self.postCmd(lsp_helpers.init_message("file://" + self.root_path, self.server_proc.pid))
+            log.debug("starting logger thread")
+            loggerThread = threading.Thread(target=ServerClient.__logger, args=(
+                self.server_proc.stderr, 1))
+            loggerThread.daemon = True
+            loggerThread.start()
+
+        self.postCmd(lsp_helpers.init_message(lsp_helpers.filename_to_uri(self.root_path), self.server_proc.pid))
 
     @staticmethod
     def __reader(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers):
@@ -275,8 +269,17 @@ class ServerClient(LspCommClient):
         while True:
             if LspCommClient.read_msg(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers):
                 log.debug("server exited")
+                proc.stderr.close()
                 return
 
+    @staticmethod
+    def __logger(stream, bar):
+        """ Dumps server's stderr to stderr """
+        try:
+            for line in iter(stream.readline, ""):
+                print(">" + line.decode("utf-8").rstrip(), file=sys.stderr)
+        except:
+            pass
 
 class WorkerClient(LspCommClient):
     stop_worker = False

@@ -1,9 +1,13 @@
+import threading
+
 import sublime_plugin
 
 from ..libs import *
 from ..libs.view_helpers import *
 from ..libs.reference import *
+from ..libs import log
 from .base_command import TypeScriptBaseTextCommand
+from collections import defaultdict
 
 
 class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
@@ -13,10 +17,9 @@ class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
             pos = self.view.sel()[0].begin()
             cursor = self.view.rowcol(pos)
             line = str(cursor[0] + 1)
-            args = {"line": line, "filename": self.view.file_name(), "referencesRespBody": references_resp["body"]}
-            args_json_str = json_helpers.encode(args)
-            ref_view = get_ref_view()
-            ref_view.run_command('typescript_populate_refs', {"argsJson": args_json_str})
+            t = threading.Thread(target=TypescriptFindReferencesCommand.__decorate, args=(self.view.file_name(), line, references_resp["body"]))
+            t.daemon = True
+            t.start()
         self.view.erase_status("typescript_populate_refs")
 
     def run(self, text):
@@ -35,6 +38,25 @@ class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
             False
         # TODO(uforic) hide if text isn't clicked on, imitating Sublime Go to def behavior
         return True
+
+    @staticmethod
+    def __decorate(file_name, line, references):
+        symbol = None
+        file_entries = defaultdict(list)
+        for i, entry in enumerate(references["refs"]):
+            file_entries[entry["file"]].append(entry)
+        for file_name in file_entries:
+            get_lines_from_file(file_name, file_entries[file_name])
+            for entry in file_entries[file_name]:
+                if symbol is None and entry["start"]["line"] == entry["end"]["line"]:
+                    symbol = entry["lineText"][entry["start"]["offset"]-1:entry["end"]["offset"]-1]
+        if symbol is None:
+            symbol = "?"
+        references["symbolName"] = symbol
+        args = {"line": line, "filename": file_name, "referencesRespBody": references}
+        args_json_str = json_helpers.encode(args)
+        ref_view = get_ref_view()
+        ref_view.run_command('typescript_populate_refs', {"argsJson": args_json_str})
 
 
 class TypescriptGoToRefCommand(sublime_plugin.TextCommand):
@@ -119,7 +141,7 @@ class TypescriptPopulateRefs(sublime_plugin.TextCommand):
         args = json_helpers.decode(argsJson)
         file_name = args["filename"]
         line = args["line"]
-        ref_display_string = args["referencesRespBody"]["symbolDisplayString"]
+        ref_display_string = args["referencesRespBody"]["symbolName"]
         ref_id = args["referencesRespBody"]["symbolName"]
         refs = args["referencesRespBody"]["refs"]
 
@@ -173,3 +195,24 @@ class TypescriptPopulateRefs(sublime_plugin.TextCommand):
         # serialize the reference info into the settings
         self.view.settings().set('refinfo', ref_info.as_value())
         self.view.set_read_only(True)
+
+
+def get_lines_from_file(fileName, entries):
+    line_nos = defaultdict(list)
+    for entry in entries:
+        line_nos[entry["start"]["line"] - 1].append(entry)
+    f = None
+    try:
+        f = open(fileName, encoding='utf-8', errors='ignore')
+        count = 0
+        for line in f:
+            if line_nos.get(count):
+                for entry in line_nos.get(count):
+                    entry["lineText"] = line.rstrip()
+            count = count + 1
+
+    except Exception as e:
+        log.exception('Error fetching preview from %s' % (fileName))
+    finally:
+        if f is not None:
+            f.close()

@@ -1,5 +1,7 @@
 from .lsp_client import ServerClient, WorkerClient
 from .service_proxy import ServiceProxy
+from .logger import log
+
 import json
 import threading
 try:
@@ -18,17 +20,22 @@ class LspClientManager():
 
     def register_extensions(self, file_exts, binary_name, args, env):
         for file_ext in file_exts:
+            log.debug('Registered binary {0} for extension {1}'.format(binary_name, file_ext))
             self.extension_mapping[file_ext] = (binary_name, args if args else [], env)
 
     def get_client(self, file_ext, root_path):
+        log.debug('Looking for client for extension {0} in {1}'.format(file_ext, root_path))
         if file_ext not in self.extension_mapping:
+            log.debug('Extension {0} is not supported yet'.format(file_ext))
             return None
             # return FileExtensionNotRegistered(file_ext)
         binary_name, args, env = self.extension_mapping[file_ext]
         key = (root_path, binary_name)
         if key in self.client_mapping:
+            log.debug('Using existing client')
             return self.client_mapping[key]
         try:
+            log.debug('Instantiating new client using binary {0} for extension {1} in {2}'.format(binary_name, file_ext, root_path))
             node_client = ServerClient(binary_name, args, env, root_path)
             worker_client = WorkerClient(binary_name, args, env, root_path)
             service = ServiceProxy(worker_client, node_client)

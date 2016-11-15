@@ -28,11 +28,9 @@ This plugin has been developed for use with the [go-langserver](https://github.c
 
 ## Installation
 
-### Go installation
+### Connector installation
 
-First, install the `langserver-go` binary by running `go get -u github.com/sourcegraph/go-langserver/langserver/cmd/langserver-go`. The `langserver-go` binary should now be available via your command line.
-
-Next, install the `sublime-lsp` connector for Sublime Text by cloning `sublime-lsp` repository into your Sublime Text 3 Packages folder:
+Install the `sublime-lsp` connector for Sublime Text by cloning `sublime-lsp` repository into your Sublime Text 3 Packages folder:
 
 macOS:
 
@@ -46,28 +44,94 @@ Linux:
 git clone git@github.com:sourcegraph/sublime-lsp.git ~/.config/sublime-text-3/Packages/sublime-lsp
 ```
 
+Windows:
+
+```bat
+cd "%APPDATA%\Sublime Text 3\Packages"
+git clone https://github.com/sourcegraph/sublime-lsp
+```
+
+### Go installation
+
+Install the `langserver-go` binary by running `go get -u github.com/sourcegraph/go-langserver/langserver/cmd/langserver-go`. The `langserver-go` binary should now be available via your command line.
+
 Next, configure the LSP connector for the `langserver-go` binary. To change your Sourcegraph settings, open `SublimeLsp.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Sublime Lsp Connector > Settings - User`.
+
+Add the following client descriptor into `clients` section
 
 ```
 {
     ...
-    "clients": [
-        {
-            "binary": "langserver-go",
-            "file_exts": ["go"],
-            // the go binary must be in the path
-            "path_additions": ["/usr/local/go/bin"],
-            "env": {
-                // GOPATH is a required argument, ~'s don't work
-                "GOPATH": "",
+        "clients": [
+            {
+                "binary": "langserver-go",
+                "file_exts": ["go"],
+                // the go binary must be in the path
+                "path_additions": ["/usr/local/go/bin"],
+                "env": {
+                    // GOPATH is a required argument, ~'s don't work
+                    "GOPATH": "",
+                }
             }
-        }
+        ]
+    ....
+}
+```
+
+Finally, restart Sublime Text to start using the plugin. You may want to [disable Sublime's native tooltips](https://github.com/sourcegraph/lsp-sublime#remove-sublime-text-3-tooltips-and-goto-menu-items), as they are duplicative and interfere with this connector's tooltips.  
+
+### TypeScript/JavaScript installation
+
+First, you need to add TypeScript Sublime support the following way:
+
+```shell
+git clone git clone https://github.com/Microsoft/TypeScript-TmLanguage ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/TypeScript-TmLanguage
+```
+
+Linux:
+
+```shell
+git clone https://github.com/Microsoft/TypeScript-TmLanguage ~/.config/sublime-text-3/Packages/TypeScript-TmLanguage
+```
+
+Windows:
+
+```bat
+cd "%APPDATA%\Sublime Text 3\Packages"
+git clone https://github.com/Microsoft/TypeScript-TmLanguage
+```
+
+Then install the TypeScript/JavaScript LSP server the following way:
+
+```shell
+export JSTS_DIR=...
+git clone https://github.com/sourcegraph/javascript-typescript-langserver $JSTS_DIR
+cd $JSTS_DIR
+npm install
+node_modules/.bin/tsc
+```
+
+Please make sure that `$JSTS_DIR/bin` is in `$PATH`
+
+Next, register TypeScript/JavaScript LSP client. To change your Sourcegraph settings, open `SublimeLsp.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Sublime Lsp Connector > Settings - User`.
+
+Add the following client descriptor into `clients` section
+
+```
+{
+    ...
+        "clients": [
+            {
+                "binary": "javascript-typescript-stdio",
+                "file_exts": ["ts", "tsx", "js", "jsx"]
+            }
     ]
     ...
 }
 ```
 
 Finally, restart Sublime Text to start using the plugin. You may want to [disable Sublime's native tooltips](https://github.com/sourcegraph/sublime-lsp#remove-sublime-text-3-tooltips-and-goto-menu-items), as they are duplicative and interfere with this connector's tooltips.  
+
 
 ## Usage
 

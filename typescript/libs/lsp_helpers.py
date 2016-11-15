@@ -1,6 +1,14 @@
 from . import json_helpers
+import sublime
 import json
+import sys
 
+if int(sublime.version()) < 3000:
+    import urllib
+    from urlparse import urljoin
+else:
+    import urllib.request as urllib
+    from urllib.parse import urljoin
 
 def init_message(root_path, process_id):
     cmd = {
@@ -126,12 +134,13 @@ def convert_filename_to_lsp(args, version=None):
 
 
 def filename_to_uri(filename):
-    return "file://"+filename
-
+    return urljoin('file:', urllib.pathname2url(filename))
 
 def convert_lsp_to_filename(uri):
-    return uri[len("file://"):]
-
+    uri = uri[len("file://"):]
+    if sys.platform == "win32":
+        uri = uri.lstrip("/")
+    return uri
 
 def format_request(request):
     """Converts the request into json and adds the Content-Length header"""
@@ -211,19 +220,17 @@ def convert_response(request_type, response):
         }
     elif request_type == "textDocument/references":
         referencesRespBody = {
-                "refs": [],
-                "symbolName": "SymbolName",
-                "symbolDisplayString": "SymbolText",
-                "symbolStartOffset": 17
-            }
+                "refs": []
+        }
+
         for entry in response["result"]:
+            file = convert_lsp_to_filename(entry["uri"])
             referencesRespBody["refs"].append({
                 "end": convert_position_from_lsp(entry["range"]["end"]),
                 "start": convert_position_from_lsp(entry["range"]["start"]),
                 "isDefinition": False,
                 "isWriteAccess": True,
-                "file": convert_lsp_to_filename(entry["uri"]),
-                "lineText": "RandomText",
+                "file": file
             })
         return {
             "seq": 0,
@@ -242,3 +249,4 @@ def convert_response(request_type, response):
 #         ref_display_string = args["referencesRespBody"]["symbolDisplayString"]
 #         ref_id = args["referencesRespBody"]["symbolName"]
 #         refs = args["referencesRespBody"]["refs"]
+
