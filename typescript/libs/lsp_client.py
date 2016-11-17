@@ -267,10 +267,14 @@ class ServerClient(LspCommClient):
     def __reader(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers):
         """ Main function for reader thread """
         while True:
-            if LspCommClient.read_msg(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers):
-                log.debug("server exited")
-                proc.stderr.close()
-                return
+            try:
+                if LspCommClient.read_msg(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers):
+                    log.debug("server exited")
+                    proc.stderr.close()
+                    return
+            except:
+                log.exception('An error occurred while reading LSP messages')
+
 
     @staticmethod
     def __logger(stream, bar):
@@ -318,6 +322,9 @@ class WorkerClient(LspCommClient):
     def __reader(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers):
         """ Main function for worker thread """
         while True:
-            if LspCommClient.read_msg(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers) or WorkerClient.stop_worker:
-                log.debug("worker exited")
-                return
+            try:
+                if LspCommClient.read_msg(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers) or WorkerClient.stop_worker:
+                    log.debug("worker exited")
+                    return
+            except:
+                log.exception('An error occurred while reading LSP messages')
