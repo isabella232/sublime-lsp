@@ -74,7 +74,9 @@ def convert_cmd(str_cmd):
             "textDocument": {
                 "uri": filename_to_uri(args["file"])
             },
-            "includeDeclaration": False,
+            "context": {
+                "includeDeclaration": False,
+            }
         }
         return new_cmd
     return None
@@ -108,6 +110,8 @@ def convert_range_to_lsp(args):
 
 
 def convert_position_from_lsp(args):
+    if args is None:
+        return None
     return {
         "line": args["line"] + 1,
         "offset": args["character"] + 1
@@ -187,16 +191,17 @@ def convert_response(request_type, response):
 
     if request_type == "textDocument/hover":
         first_result = response["result"]
+        range = first_result["range"]
         return {
             "seq": 0,
             "request_seq": response["id"],
             "success": success,
             "command": "quickinfo",
             "body": {
-                "displayString": first_result["contents"][0]["value"],
-                "start": convert_position_from_lsp(first_result["range"]["start"]),
+                "displayString": first_result["contents"][0]["value"] if first_result["contents"] is not None and len(first_result["contents"]) > 0 else None,
+                "start": convert_position_from_lsp(range["start"] if range else None),
                 "kind": "alias",
-                "end": convert_position_from_lsp(first_result["range"]["end"]),
+                "end": convert_position_from_lsp(range["end"] if range else None),
                 "kindModifiers": "",
                 "documentation": ""
             },

@@ -5,6 +5,7 @@ import sublime_plugin
 from ..libs import *
 from ..libs.view_helpers import *
 from ..libs.reference import *
+from ..libs import log
 from .base_command import TypeScriptBaseTextCommand
 
 
@@ -201,8 +202,8 @@ class RefsHelper:
         """ returns text of the given line in the given file """
         lines = self.__table(fileName)
         l = len(lines)
-        if l < line:
-            return ''
+        if l <= line:
+            return 'Error fetching preview from %s' % (fileName)
         content = self.__content[fileName]
         start = lines[line]
         if line < l - 1:
@@ -216,17 +217,21 @@ class RefsHelper:
         lines = self.__lines.get(fileName)
         if lines is not None:
             return lines
-        f = open(fileName)
         lines = []
         offset = 0
         content = ''
+        f = None
         try:
+            f = open(fileName, encoding='utf-8', errors='ignore')
             for line in f:
                 lines.append(offset)
                 offset += len(line)
                 content += line
+        except Exception as e:
+            log.exception('Error fetching preview from %s' % (fileName))
         finally:
-            f.close()
+            if f is not None:
+                f.close()
             self.__lines[fileName] = lines
             self.__content[fileName] = content
         return lines

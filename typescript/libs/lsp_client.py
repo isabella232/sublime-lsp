@@ -323,7 +323,7 @@ class ServerClient(LspCommClient):
             loggerThread.daemon = True
             loggerThread.start()
 
-        self.postCmd(lsp_helpers.init_message(lsp_helpers.filename_to_uri(self.root_path), self.server_proc.pid))
+        self.postCmd(lsp_helpers.init_message(self.root_path, self.server_proc.pid))
 
     @staticmethod
     def __reader(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers):

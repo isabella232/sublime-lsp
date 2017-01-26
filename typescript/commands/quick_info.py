@@ -39,8 +39,11 @@ class TypescriptQuickInfoDoc(TypeScriptBaseTextCommand):
             info_str = quick_info_resp_dict["body"]["displayString"]
             status_info_str = info_str
             doc_str = quick_info_resp_dict["body"]["documentation"]
+
+            if not info_str and not doc_str:
+                return
             # process documentation
-            if len(doc_str) > 0:
+            if doc_str:
                 if not TOOLTIP_SUPPORT:
                     doc_panel = sublime.active_window().get_output_panel("doc")
                     doc_panel.run_command(

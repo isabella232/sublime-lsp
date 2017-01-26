@@ -105,11 +105,9 @@ def is_supported_ext(view):
         location = view.sel()[0].begin()
     except:
         return False
-    for selector in cli.client_manager.extension_mapping.keys():
-        if view.match_selector(location, "source.%s" % selector):
-            return True
 
-    return False
+    file_extension = os.path.splitext(view.file_name())[1][1:]
+    return file_extension in cli.client_manager.extension_mapping
 
 
 def is_special_view(view):

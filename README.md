@@ -56,31 +56,26 @@ git clone https://github.com/sourcegraph/sublime-lsp
 Install the `langserver-go` binary by running `go get -u github.com/sourcegraph/go-langserver/langserver/cmd/langserver-go`. The `langserver-go` binary should now be available via your command line.
 
 Next, configure the LSP connector for the `langserver-go` binary. To change your Sourcegraph settings, open `SublimeLsp.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Sublime Lsp Connector > Settings - User`.
-Find there `clients` section, if it does not exist, create it the following way
+```
+
+Add the following client descriptor into `clients` section
 
 ```
 {
-...
-    "clients": [
-    ]
-...
-}
-```
-
-Then, add the following client descriptor into `clients` section
-
-```
-{
-        {
-            "binary": "langserver-go",
-            "file_exts": ["go"],
-            // the go binary must be in the path
-            "path_additions": ["/usr/local/go/bin"],
-            "env": {
-                // GOPATH is a required argument, ~'s don't work
-                "GOPATH": "",
+    ...
+        "clients": [
+            {
+                "binary": "langserver-go",
+                "file_exts": ["go"],
+                // the go binary must be in the path
+                "path_additions": ["/usr/local/go/bin"],
+                "env": {
+                    // GOPATH is a required argument, ~'s don't work
+                    "GOPATH": "",
+                }
             }
-        }
+        ]
+    ....
 }
 ```
 
@@ -120,25 +115,19 @@ node_modules/.bin/tsc
 Please make sure that `$JSTS_DIR/bin` is in `$PATH`
 
 Next, register TypeScript/JavaScript LSP client. To change your Sourcegraph settings, open `SublimeLsp.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Sublime Lsp Connector > Settings - User`.
-Find there `clients` section, if it does not exist, create it the following way
+
+Add the following client descriptor into `clients` section
 
 ```
 {
-...
-    "clients": [
+    ...
+        "clients": [
+            {
+                "binary": "javascript-typescript-stdio",
+                "file_exts": ["ts", "tsx", "js", "jsx"]
+            }
     ]
-...
-}
-```
-
-Then, add the following client descriptor into `clients` section
-
-```
-{
-        {
-            "binary": "javascript-typescript-sublime",
-            "file_exts": ["ts", "tsx", "js", "jsx"]
-        }
+    ...
 }
 ```
 
