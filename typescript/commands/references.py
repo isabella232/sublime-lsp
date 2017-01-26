@@ -7,6 +7,7 @@ from ..libs.view_helpers import *
 from ..libs.reference import *
 from ..libs import log
 from .base_command import TypeScriptBaseTextCommand
+from collections import defaultdict
 
 
 class TypescriptFindReferencesCommand(TypeScriptBaseTextCommand):
