@@ -10,7 +10,11 @@ class TypescriptQuickInfo(TypeScriptBaseTextCommand):
         if quick_info_resp_dict["success"]:
             info_str = quick_info_resp_dict["body"]["displayString"]
             doc_str = quick_info_resp_dict["body"]["documentation"]
-            if len(doc_str) > 0:
+            if not info_str and not doc_str:
+                self.view.erase_status("typescript_info")
+                return
+
+            if doc_str:
                 info_str += " (^T^Q for more)"
             self.view.set_status("typescript_info", info_str)
         else:
