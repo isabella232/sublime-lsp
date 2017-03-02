@@ -28,7 +28,7 @@ class LspCommClient(node_client.CommClient):
     def __init__(self, binary_path, args, env, root_path):
         self.server_proc = None
         self.args = copy.deepcopy(args)
-        program = which(binary_path)
+        program = which(binary_path, path = env["PATH"])
         if program is None:
             program = binary_path
         self.args.insert(0, program)
