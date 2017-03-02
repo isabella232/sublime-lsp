@@ -222,7 +222,6 @@ class LspCommClient(node_client.CommClient):
     def is_executable(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
-
 class ServerClient(LspCommClient):
 
     def __init__(self, binary_path, args, env, root_path):
@@ -248,7 +247,7 @@ class ServerClient(LspCommClient):
             print(err)
             self.server_proc = None
         # start reader thread
-        if self.server_proc and (self.server_proc.poll() is None):
+        if self.server_proc and (not self.server_proc.poll()):
             log.debug("server process " + str(self.server_proc.pid))
             log.debug("starting reader thread")
             readerThread = threading.Thread(target=ServerClient.__reader, args=(
@@ -261,7 +260,7 @@ class ServerClient(LspCommClient):
             loggerThread.daemon = True
             loggerThread.start()
 
-        self.postCmd(lsp_helpers.init_message(lsp_helpers.filename_to_uri(self.root_path), self.server_proc.pid))
+        self.postCmd(lsp_helpers.init_message(self.root_path, self.server_proc.pid))
 
     @staticmethod
     def __reader(stream, msgq, eventq, asyncReq, reqType, proc, eventHandlers):

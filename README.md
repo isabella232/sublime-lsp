@@ -56,6 +56,9 @@ git clone https://github.com/sourcegraph/sublime-lsp
 Install the `langserver-go` binary by running `go get -u github.com/sourcegraph/go-langserver/langserver/cmd/langserver-go`. The `langserver-go` binary should now be available via your command line.
 
 Next, configure the LSP connector for the `langserver-go` binary. To change your Sourcegraph settings, open `SublimeLsp.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Sublime Lsp Connector > Settings - User`.
+```
+
+Add the following client descriptor into `clients` section
 
 Add the following client descriptor into `clients` section
 
@@ -82,26 +85,7 @@ Finally, restart Sublime Text to start using the plugin. You may want to [disabl
 
 ### TypeScript/JavaScript installation
 
-First, you need to add TypeScript Sublime support the following way:
-
-```shell
-git clone git clone https://github.com/Microsoft/TypeScript-TmLanguage ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/TypeScript-TmLanguage
-```
-
-Linux:
-
-```shell
-git clone https://github.com/Microsoft/TypeScript-TmLanguage ~/.config/sublime-text-3/Packages/TypeScript-TmLanguage
-```
-
-Windows:
-
-```bat
-cd "%APPDATA%\Sublime Text 3\Packages"
-git clone https://github.com/Microsoft/TypeScript-TmLanguage
-```
-
-Then install the TypeScript/JavaScript LSP server the following way:
+Install the TypeScript/JavaScript LSP server the following way:
 
 ```shell
 export JSTS_DIR=...
