@@ -53,12 +53,9 @@ git clone https://github.com/sourcegraph/sublime-lsp
 
 ### Go installation
 
-Install the `langserver-go` binary by running `go get -u github.com/sourcegraph/go-langserver/langserver/cmd/langserver-go`. The `langserver-go` binary should now be available via your command line.
+Install the `langserver-go` binary by running `go get -u github.com/sourcegraph/go-langserver/`. The `go-langserver` binary should now be available via your command line.
 
 Next, configure the LSP connector for the `langserver-go` binary. To change your Sourcegraph settings, open `SublimeLsp.sublime-settings` by clicking `Sublime Text > Preferences > Package Settings > Sublime Lsp Connector > Settings - User`.
-```
-
-Add the following client descriptor into `clients` section
 
 Add the following client descriptor into `clients` section
 
@@ -67,7 +64,7 @@ Add the following client descriptor into `clients` section
     ...
         "clients": [
             {
-                "binary": "langserver-go",
+                "binary": "go-langserver",
                 "file_exts": ["go"],
                 // the go binary must be in the path
                 "path_additions": ["/usr/local/go/bin"],

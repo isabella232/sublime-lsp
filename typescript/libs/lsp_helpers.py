@@ -180,6 +180,14 @@ def convert_other(msg):
     return None
 
 
+def convert_hover(result):
+    if type(result) is dict:
+        return result
+    return {
+        "value": result,
+        "language": "markdown"
+    }
+
 def convert_response(request_type, response):
     if response.get("id") == 0:
         return None
@@ -190,20 +198,20 @@ def convert_response(request_type, response):
         return None
 
     if request_type == "textDocument/hover":
-        first_result = response["result"]
-        range = first_result["range"]
+        result = response["result"]
+        range = result["range"]
         return {
             "seq": 0,
             "request_seq": response["id"],
             "success": success,
             "command": "quickinfo",
             "body": {
-                "displayString": first_result["contents"][0]["value"] if first_result["contents"] is not None and len(first_result["contents"]) > 0 else None,
+                "displayString": convert_hover(result["contents"][0])["value"] if result["contents"] is not None and len(result["contents"]) > 0 else None,
                 "start": convert_position_from_lsp(range["start"] if range else None),
                 "kind": "alias",
                 "end": convert_position_from_lsp(range["end"] if range else None),
                 "kindModifiers": "",
-                "documentation": ""
+                "documentation": convert_hover(result["contents"][1])["value"] if result["contents"] is not None and len(result["contents"]) > 1 else None,
             },
             "type": "response"
         }
